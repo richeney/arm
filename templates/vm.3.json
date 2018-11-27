@@ -1,0 +1,248 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vnetName": {
+            "type": "string"
+        },
+        "subnetName": {
+            "type": "string"
+        },
+        "vmName": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_A0",
+            "allowedValues": [
+                "Standard_A0",
+                "Standard_A1",
+                "Standard_A2"
+            ]
+        },
+        "adminUsername": {
+            "defaultValue": "vmadmin",
+            "type": "string"
+        },
+        "adminPassword": {
+            "defaultValue": "MCTGlobalSummit'18",
+            "type": "securestring"
+        },
+        "os": {
+            "type": "string",
+            "defaultValue": "windows",
+            "allowedValues": [
+                "windows",
+                "ubuntu"
+            ],
+            "metadata": {
+                "description": "Specify operating system"
+            }
+        },
+        "numberOfDataDisks": {
+            "defaultValue": 0,
+            "maxValue": 32,
+            "type": "int"
+        },
+        "dataDiskSize": {
+           "type": "int",
+           "defaultValue": 1023,
+           "metadata": {
+                "description": "Size in GiB of the data disk"
+            }
+        },
+        "pip": {
+            "defaultValue": true,
+            "type": "bool",
+            "metadata": {
+                "description": "Boolean to control creation of public IP address"
+            }
+        },
+        "avsetName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Name of the availability set to join.  Set to empty string if not required."
+            }
+        },
+        "lbName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Name of the load balancer to join. Set to empty string if not required."
+            }
+        },
+        "script": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "Script extension to conditionally run.  Assumed to be in same URI location as the current template if not full https URI."
+            }
+        }
+    },
+    "variables": {
+        "saName": "[concat('bootdiags', uniqueString(resourceGroup().id))]",
+        "windowsImageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2016-Datacenter",
+            "version": "latest"
+        },
+        "ubuntuImageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "18.04-LTS",
+            "version": "latest"
+        },
+        "imageReference": "[variables(concat(parameters('os'), 'ImageReference'))]",
+        "nicName": "[concat(parameters('vmName'),'-nic')]",
+        "pipName": "[concat(parameters('vmName'),'-pip')]",
+        "osDiskName": "[concat(parameters('vmName'),'-os')]",
+        "copy": [
+            {
+                "name": "dataDisks",
+                "count": "[max(parameters('numberofDataDisks'), int('1'))]",
+                "input": {
+                    "name": "[concat(parameters('vmName'), '-dataDisk', padLeft(copyIndex('dataDisks'), 2, '0'))]",
+                    "lun": "[copyIndex('dataDisks')]",
+                    "createOption": "Empty",
+                    "diskSizeGB": "[parameters('dataDiskSize')]"
+                }
+            }
+        ],
+        "pipId": "[resourceId('Microsoft.Network/publicIPAddresses',variables('pipName'))]",
+        "nicId": "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
+        "subnetId": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
+        "pipObject": {
+            "id": "[variables('pipId')]"
+        },
+        "avsetObject": {
+            "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('avsetName'))]"
+        },
+        "lbpoolArray": [
+            {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('lbName')), '/backendAddressPools/BackendPool')]"
+            }
+        ],
+        "scriptUri": "[if(empty(parameters('script')), '', if(startsWith(parameters('script'), 'https://'), parameters('script'), uri(deployment().properties.templateLink.uri, parameters('script'))))]",
+        "ubuntuCommand": "[concat('/bin/bash -x ', parameters('script'), ' 2>&1')]",
+        "windowsCommand": "[concat('powershell -ExecutionPolicy Unrestricted -File', parameters('script'))]",
+        "commandToExecute": "[variables(concat(parameters('os'), 'Command'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('saName')]",
+            "apiVersion": "2018-07-01",
+            "location": "[parameters('location')]",
+            "kind": "Storage",
+            "sku": {
+                "name": "Standard_LRS"
+            }
+        },
+        {
+            "comments": "Conditionally create public IP address for VM",
+            "condition": "[parameters('pip')]",
+            "name": "[variables('pipName')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2017-10-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic"
+            }
+        },
+        {
+            "name": "[variables('nicName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2017-10-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[variables('pipID')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('subnetId')]"
+                            },
+                            "loadBalancerBackendAddressPools": "[if( empty(parameters('lbName')), json('null'), variables('lbpoolArray'))]",
+                            "publicIPAddress": "[if(parameters('pip'), variables('pipObject'), json('null'))]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat(parameters('vmName'))]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2018-06-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[variables('nicId')]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": "[variables('imageReference')]",
+                    "osDisk": {
+                        "name": "[variables('osDiskName')]",
+                        "createOption": "FromImage"
+                    },
+                    "dataDisks": "[if(greater(parameters('numberOfDataDisks'), int('0')), variables('dataDisks'), json('[]'))]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[variables('nicId')]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('saName'))).primaryEndpoints.blob]"
+                    }
+                },
+                "availabilitySet": "[if(empty(parameters('avsetName')), json('null'), variables('avsetObject'))]"
+            }
+        },
+        {
+            "condition": "[not(empty(parameters('script')))]",
+            "comments": "On Linux, script stdout and stderr will be output to /var/lib/waagent/custom-script/download/0/.  Use sudo to access.",
+            "name": "[concat(parameters('vmName'), '/script-', parameters('script'))]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2017-12-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "[variables('scriptUri')]"
+                    ],
+                    "commandToExecute": "[variables('commandToExecute')]"
+                }
+            },
+            "dependsOn": [
+                "[parameters('vmName')]"
+            ]
+        }
+    ]
+}

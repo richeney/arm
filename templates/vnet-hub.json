@@ -1,0 +1,129 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "core",
+      "metadata": {
+            "description": "Name for the vNet."
+      }
+    },
+    "vNetAddressPrefixes": {
+      "type": "array",
+      "defaultValue": [ "10.0.0.0/16" ],
+      "metadata": {
+        "description": "Array of IP address prefixes for the vNet address space.  There is usually only one prefix."
+      }
+    },
+    "subnets": {
+      "type": "array",
+      "defaultValue": [
+        { "name": "GatewaySubnet", "addressPrefix": "10.0.0.0/24" },
+        { "name": "outside", "addressPrefix": "10.0.1.0/24" },
+        { "name": "inside", "addressPrefix": "10.0.2.0/24" }
+        ],
+      "metadata": {
+        "description": "Array of the subnets. Must include GatewaySubnet if a VPN gateway is being created."
+      }
+    },
+    "createGateway": {
+      "type": "bool",
+      "defaultValue": true
+    },
+    "gatewaySku": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "VpnGw1",
+        "VpnGw2",
+        "VpnGw3"
+      ],
+      "metadata": {
+        "description": "The SKU of the VPN gateway."
+      }
+    }
+  },
+  "variables": {
+    "gatewayName": "[concat(parameters('vnetName'), '-gateway')]",
+    "gatewayPublicIpName": "[concat(parameters('vnetName'), '-gateway-pip')]",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
+    "gatewayPipId": "[resourceId('Microsoft.Network/publicIpAddresses', variables('gatewayPublicIpName'))]",
+    "gatewaySubnetId": "[concat(variables('vnetID'), '/subnets/GatewaySubnet')]",
+    "vpnType": "RouteBased"
+  },
+  "resources": [
+    {
+      "name": "[concat(parameters('vnetName'))]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2017-10-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": "[parameters('vNetAddressPrefixes')]"
+        },
+        "copy": [{
+          "name": "subnets",
+          "count": "[length(parameters('subnets'))]",
+          "input": {
+            "name": "[parameters('subnets')[copyIndex('subnets')].name]",
+            "properties": {
+              "addressPrefix": "[parameters('subnets')[copyIndex('subnets')].addressPrefix]"
+            }
+          }
+        }]
+      }
+    },
+    {
+      "condition": "[parameters('createGateway')]",
+      "name": "[variables('gatewayName')]",
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "apiVersion": "2017-10-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('gatewayPublicIpName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('gatewaySubnetId')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('gatewayPublicIpName'))]"
+              }
+            },
+            "name": "vnetGatewayConfig"
+          }
+        ],
+        "sku": {
+          "name": "[parameters('gatewaySku')]",
+          "tier": "[parameters('gatewaySku')]"
+        },
+        "gatewayType": "Vpn",
+        "vpnType": "[variables('vpnType')]",
+        "enableBgp": "false"
+      }
+    },
+    {
+      "condition": "[parameters('createGateway')]",
+      "name": "[variables('gatewayPublicIpName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2017-10-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    }
+  ],
+  "outputs": {
+    "gatewayPipId": {
+      "type": "string",
+      "value": "[variables('gatewayPipId')]"    
+    }
+  }
+}

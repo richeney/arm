@@ -1,0 +1,37 @@
+{
+    "scaffolds": [
+        {
+            "subscriptionName": "Dev/Test Subscription",
+            "primaryRegion": "australiaeast",
+            "secondaryRegion": "australiasoutheast",
+            "expressRouteRegion": "australiaeast",
+            "costManagementPolicies":[
+                {
+                    "resourceType": "Microsoft.Web/sites",
+                    "skuTiers": ["Free", "Shared"],
+                    "policy": "deny",
+                    "comments": "Free and Shared App Service plan tiers are denied because they don't come with an SLA.",
+                    "message": "Non-SLA Tiers are not suitable for Enterprise use."
+                },
+                {
+                    "resourceType": "Microsoft.Web/sites",
+                    "skuTiers": ["Premium"],
+                    "policy": "audit",
+                    "comments": "The use of Premium tiers is audited. Basic and Standard tiers are preferred."
+                },
+                {
+                    "resourceType": "Microsoft.Compute/virtualMachines",
+                    "vmSizes": ["Standard_G*", "Standard_H*", "Standard_A8", "Standard_A9", "Standard_A10", "Standard_A11"],
+                    "policy": "deny",
+                    "message": "High memory and compute intensive instances are not allowed.",
+                    "comments": ""
+                }
+            ],
+            "resourceTagPolicies":[],
+            "resourceTagSchema":[],
+            "resourceLocks":[],
+            "dutyCycleProfiles":[],
+            "comments": null
+        }
+    ]
+}

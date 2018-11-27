@@ -1,0 +1,116 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "asgName": {
+            "type": "string",
+            "defaultValue": "azureDatabaseMigrationService",
+            "metadata": {
+                "description": "Name for the Application Security Group"
+            }
+        },
+        "ports": {
+            "type": "array",
+            "defaultValue": [
+                "443",
+                "53",
+                "9354",
+                "445",
+                "12000"
+            ],
+            "metadata": {
+                "description": "Array of TCP ports to allow"
+            }
+        },
+        "description": {
+            "type": "string",
+            "defaultValue": "[concat('Allow TCP ports ', string(parameters('ports')))]",
+            "metadata": {
+                "description": "Description for the Application Security Group"
+            }
+        },
+        "nsgName": {
+            "type": "string",
+            "defaultValue": "[parameters('asgName')]",
+            "metadata": {
+                "description": "Name for the Network Security Group"
+            }
+        },
+        "sourceAddressPrefix": {
+           "type": "string",
+           "defaultValue": "VirtualNetwork",
+           "metadata": {
+                "description": "Valid sourceAddressPrefix",
+                "examples": [
+                    "VirtualNetwork",
+                    "Internet",
+                    "*"
+                ]
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Region for the resources"
+            }
+        }
+    },
+    "variables": {
+        "asgId": "[resourceId('Microsoft.Network/applicationSecurityGroups', parameters('asgName'))]",
+        "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+    },
+    "resources": [
+        {
+            "comments": "Application Security Group - associate NICs to the ASG",
+            "name": "[parameters('asgName')]",
+            "type": "Microsoft.Network/applicationSecurityGroups",
+            "apiVersion": "2018-08-01",
+            "location": "[parameters('location')]",
+            "properties": {}
+        },
+        {
+            "comments": "NSG attached to the Application Security Group",
+            "apiVersion": "2018-08-01",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[parameters('nsgName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[variables('asgId')]"
+            ],
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "[parameters('nsgName')]",
+                        "properties": {
+                            "description": "[parameters('description')]",
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "[parameters('sourceAddressPrefix')]",
+                            "sourcePortRange": "*",
+                            "destinationPortRanges": "[parameters('ports')]",
+                            "destinationApplicationSecurityGroups": [
+                                {
+                                    "location": "[parameters('location')]",
+                                    "id": "[variables('asgId')]"
+                                }
+                            ],
+                            "access": "Allow",
+                            "priority": 1000,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        "asgId": {
+            "type": "string",
+            "value": "[variables('asgId')]"
+        },
+        "nsgId": {
+            "type": "string",
+            "value": "[variables('nsgId')]"
+        }
+    }
+}

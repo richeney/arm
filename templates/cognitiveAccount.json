@@ -1,0 +1,43 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "cogAcctName": {
+           "type": "string",
+           "defaultValue": "myCognitiveAccount",
+           "metadata": {
+                "description": "Name for the cognitive account"
+            }
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "comments": "https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-functions-resource#listkeys",
+            "name": "[parameters('cogAcctName')]",
+            "type": "Microsoft.CognitiveServices/accounts",
+            "apiVersion": "2017-04-18",
+            "sku": {
+              "name": "F0"
+            },
+            "kind": "LUIS",
+            "location": "[resourceGroup().location]",
+            "tags": {},
+            "properties": {}
+          }
+    ],
+    "outputs": {
+        "account": {
+            "type": "object",
+            "value": "[reference(parameters('cogAcctName'))]"
+        },
+        "key1": {
+            "type": "string",
+            "value": "[listKeys(parameters('cogAcctName'), '2017-04-18').key1]"
+        },
+        "key2": {
+            "type": "string",
+            "value": "[listKeys(parameters('cogAcctName'), '2017-04-18').key2]"
+        }
+    }
+}

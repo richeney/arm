@@ -1,0 +1,168 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vNetName": {
+            "type": "string"
+        },
+        "subnetName": {
+            "type": "string"
+        },
+        "prefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Prefix to be used for all resource names created by this template"
+            }
+        },
+        "vmCount": {
+            "defaultValue": 2,
+            "type": "int"
+        }
+    },
+    "variables": {
+        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]",
+        "subnetId": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
+        "avsetName": "[concat(parameters('prefix'), '-AvailabilitySet')]",
+        "lbName": "[concat(parameters('prefix'), '-lb')]",
+        "lbPipName": "[concat(parameters('prefix'), '-lb-pip')]",
+        "lbPipId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('lbPipName'))]",
+        "vmUri": "[uri(deployment().properties.templateLink.uri, 'vm.json')]",
+        "script": "DemoAppConfig.sh"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "[variables('avsetName')]",
+            "apiVersion": "2017-12-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "platformFaultDomainCount": 2,
+                "platformUpdateDomainCount": 5,
+                "virtualMachines": []
+            },
+            "sku": {
+                "name": "Aligned"
+            }
+        },
+        {
+            "comments": "Create public IP address for load balancer",
+            "name": "[variables('lbPipName')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2017-10-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "comments": "Create load balancer for spokes",
+            "name": "[variables('lbName')]",
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2017-10-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('lbPipName'))]"
+            ],
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "LoadBalancerFrontEnd",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('subnetId')]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "BackendPool"
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "DemoAppRule",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('lbName')), '/frontendIpConfigurations/loadBalancerFrontEnd')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('lbName')), '/backendAddressPools/BackendPool')]"
+                            },
+                            "probe": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('lbName')), '/probes/DemoAppProbe')]"
+                            },
+                            "protocol": "Tcp",
+                            "frontendPort": 80,
+                            "backendPort": 3000,
+                            "idleTimeoutInMinutes": 15
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "properties": {
+                            "protocol": "Http",
+                            "port": 3000,
+                            "intervalInSeconds": 15,
+                            "numberOfProbes": 2,
+                            "requestPath": "/"
+                        },
+                        "name": "DemoAppProbe"
+                    }
+                ]
+            }
+        },
+        {
+            "comments": "Nested Virtual Machine deployments",
+            "name": "[concat('VM-Deployment-', parameters('prefix'), '-VM', copyindex(1))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets', variables('avsetName'))]",
+                "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('vmUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vNetName": {
+                        "value": "[parameters('vNetName')]"
+                    },
+                    "subnetName": {
+                        "value": "[parameters('subnetName')]"
+                    },
+                    "vmName": {
+                        "value": "[concat(parameters('prefix'), '-vm', copyIndex(1))]"
+                    },
+                    "script": {
+                        "value": "[variables('script')]"
+                    },
+                    "avsetName": {
+                        "value": "[variables('avsetName')]"
+                    },
+                    "lbName": {
+                        "value": "[variables('lbName')]"
+                    },
+                    "pip?": {
+                        "value": false
+                    }
+                }
+            },
+            "copy": {
+                "name": "vm",
+                "count": "[parameters('vmCount')]"
+            }
+        }
+    ],
+    "outputs": {
+        "ipaddr": {
+            "type": "string",
+            "value": "[reference(variables('lbPipId')).ipAddress]"
+        }
+    }
+}

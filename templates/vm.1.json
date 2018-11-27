@@ -1,0 +1,177 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+         "vnetName": {
+            "type": "string"
+        },
+        "subnetName": {
+            "type": "string"
+        },
+        "vmName": {
+            "type": "string"
+        },
+        "adminUsername": {
+            "defaultValue": "labuser",
+            "type": "string"
+        },
+        "adminPassword": {
+            "defaultValue": "M1crosoft123",
+            "type": "securestring"
+        },
+        "script": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "Script extension to conditionally run.  Fully path, or it will be assumed to be in same URI location as the current template."
+            }
+        },
+        "pip?": {
+            "defaultValue": false,
+            "type": "bool",
+            "metadata": {
+                "description": "Boolean to control creation of public IP address"
+            }
+        },
+        "avsetName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Name of the availability set to join.  Set to empty string if not required."
+            }
+        },
+        "lbName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Name of the load balancer to join. Set to empty string if not required."
+            }
+        }
+    },
+    "variables": {
+        "nicName": "[concat(parameters('vmName'),'-nic')]",
+        "pipName": "[concat(parameters('vmName'),'-pip')]",
+        "osDiskName": "[concat(parameters('vmName'),'-os')]",
+        "pipId": "[resourceId('Microsoft.Network/publicIPAddresses',variables('pipName'))]",
+        "nicId": "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
+        "subnetId": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
+        "pipObject": {
+            "id": "[variables('pipId')]"
+        },
+        "avsetObject": {
+            "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('avsetName'))]"
+        },
+        "lbpoolArray": [
+            {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('lbName')), '/backendAddressPools/BackendPool')]"
+            }
+        ],
+        "scriptUri": "",
+        "scriptUri": "[uri(deployment().properties.templateLink.uri, parameters('script'))]"
+    },
+    "resources": [
+        {
+            "comments": "Conditionally create public IP address for VM",
+            "condition": "[parameters('pip?')]",
+            "name": "[variables('pipName')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2017-10-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic"
+            }
+        },
+        {
+            "name": "[variables('nicName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2017-10-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[variables('pipID')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('subnetId')]"
+                            },
+                            "loadBalancerBackendAddressPools": "[if( empty(parameters('lbName')), json('null'), variables('lbpoolArray'))]",
+                            "publicIPAddress": "[if(parameters('pip?'), variables('pipObject'), json('null'))]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat(parameters('vmName'))]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2017-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[variables('nicId')]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_A0"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "16.04.0-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[variables('osDiskName')]",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[variables('nicId')]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": false
+                    }
+                },
+                "availabilitySet": "[if(empty(parameters('avsetName')), json('null'), variables('avsetObject'))]"
+            }
+        },
+        {
+            "condition": "[not(empty(parameters('script')))]",
+            "comments": "Script, stdout and stderr will be output to /var/lib/waagent/custom-script/download/0/.  Use sudo to access.",
+            "name": "[concat(parameters('vmName'), '/script-', parameters('script'))]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2017-12-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "[variables('scriptUri')]"
+                    ],
+                    "commandToExecute": "[concat('/bin/bash -x ', parameters('script'), ' 2>&1')]"
+                }
+            },
+            "dependsOn": [
+                "[parameters('vmName')]"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,58 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspaceName": {
+            "defaultValue": "[resourceGroup().name]",
+            "type": "string"
+        },
+        "tier": {
+            "defaultValue": "premium",
+            "allowedValues": [
+                "premium",
+                "standard",
+                "trial"
+            ],
+            "type": "string"
+        },
+        "vnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The first 2 octets of the virtual network /16 address range (e.g., '10.139' for the address range 10.139.0.0/16).",
+                "exampleValue": "10.139"
+            }
+        }
+    },
+    "variables": {
+        "managedResourceGroupName": "[concat('databricks-rg-', parameters('workspaceName'), '-', uniqueString(parameters('workspaceName'), resourceGroup().id))]",
+        "managedResourceGroupId": "[concat(subscription().id, '/resourceGroups/', variables('managedResourceGroupName'))]",
+        "parameters": {
+            "vnetAddressPrefix": {
+                "value": "[parameters('vnetAddressPrefix')]"
+            }
+        }
+    },
+    "resources": [
+        {
+            "name": "[parameters('workspaceName')]",
+            "type": "Microsoft.Databricks/workspaces",
+            "comments": "Please do not use an existing resource group for ManagedResourceGroupId.",
+            "apiVersion": "2018-04-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "[parameters('tier')]"
+            },
+            "properties": {
+                "ManagedResourceGroupId": "[variables('managedResourceGroupId')]",
+                "parameters": "[if(empty(parameters('vnetAddressPrefix')), json('null'), variables('parameters'))]"
+            }
+        }
+    ],
+    "outputs": {
+        "workspace": {
+            "type": "object",
+            "value": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')))]"
+        }
+    }
+}

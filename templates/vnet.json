@@ -1,0 +1,215 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "createVnet": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Boolean to control creation of the vNet itself.  Useful if adding subnets."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Azure region."
+            }
+        },
+        "tags": {
+            "type": "object",
+            "defaultValue": {
+                "environment": "test",
+                "source": "ARM template"
+            },
+            "metadata": {
+                "description": "Object containing name:value pair tags - MAKE MY DEFAULT EMPTY!!!!!!"
+            }
+        },
+        "vnetName": {
+            "type": "string",
+            "defaultValue": "[if(contains(parameters('vnet'), 'name'), parameters('vnet').name, 'myVnet')]",
+            "metadata": {
+                "description": "Name for the vNet."
+            }
+        },
+        "vNetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+                "description": "Single vNet address prefix."
+            }
+        },
+        "vNetAddressPrefixes": {
+            "type": "array",
+            "defaultValue": "[if(contains(parameters('vnet'), 'addressPrefixes'), parameters('vnet').addressPrefixes, array(parameters('vNetAddressPrefix')))]",
+            "metadata": {
+                "description": "Array of vNet address prefixes.",
+                "example": [
+                    "10.0.0.0/20",
+                    "10.0.0.12/20"
+                ]
+            }
+        },
+        "dnsServers": {
+            "type": "array",
+            "defaultValue": "[if(contains(parameters('vnet'), 'dnsServers'), parameters('vnet').dnsServers, json('[]'))]",
+            "metadata": {
+                "description": "Array of DNS server IP addresses.",
+                "example": [
+                    "1.1.1.1",
+                    "1.0.0.1"
+                ]
+            }
+        },
+        "nsgResourceGroup": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Allow NSGs to be pulled from another resource group."
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Name for a single subnet.  Must be used with subnetAddressPrefix."
+            }
+        },
+        "subnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/24",
+            "metadata": {
+                "description": "Address space for a single subnet."
+            }
+        },
+        "subnet": {
+            "type": "object",
+            "defaultValue": "[if(and(not(empty(parameters('subnetName'))), not(empty(parameters('subnetAddressPrefix')))), json(concat('{\"addressPrefix\": \"', parameters('subnetAddressPrefix'), '\",\"name\": \"', parameters('subnetName'), '\"}')), json('{}'))]",
+            "metadata": {
+                "description": "Single subnet object. See example below.  Will use subnetName and subnetAddressPrefix if populated.",
+                "example": {
+                    "addressPrefix": "10.0.0.0/24",
+                    "name": "subnet",
+                    "nsg": "nsgName"
+                }
+            }
+        },
+        "subnets": {
+            "type": "array",
+            "defaultValue": "[if(contains(parameters('vnet'), 'subnets'), parameters('vnet').subnets, if(empty(parameters('subnet')), json('[]'), array(parameters('subnet'))))]",
+            "metadata": {
+                "description": "Array of subnets",
+                "example": [
+                    {
+                        "addressPrefix": "10.0.0.0/24",
+                        "name": "GatewaySubnet"
+                    },
+                    {
+                        "addressPrefix": "10.0.1.0/24",
+                        "name": "subnet1",
+                        "nsg": "nsgName"
+                    }
+                ]
+            }
+        },
+        "vnet": {
+            "type": "object",
+            "defaultValue": {},
+            "metadata": {
+                "description": "Complex vnet object",
+                "example": "Add an example"
+            }
+        }
+    },
+    "functions": [
+        {
+            "namespace": "nsg",
+            "members": {
+                "id": {
+                    "parameters": [
+                        {
+                            "name": "rg",
+                            "type": "string"
+                        },
+                        {
+                            "name": "nsg",
+                            "type": "string"
+                        }
+                    ],
+                    "output": {
+                        "type": "string",
+                        "value": "[if(startsWith(parameters('nsg'), '/subscriptions/'), parameters('nsg'), resourceId(parameters('rg'), 'Microsoft.Network/networkSecurityGroups', parameters('nsg')))]"
+                    }
+                }
+            }
+        }
+    ],
+    "variables": {
+        "copy": [
+            {
+                "name": "subnets",
+                "count": "[length(parameters('subnets'))]",
+                "input": {
+                    "name": "[parameters('subnets')[copyIndex('subnets')].name]",
+                    "addressPrefix": "[parameters('subnets')[copyIndex('subnets')].addressPrefix]",
+                    "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName')), '/subnets/', parameters('subnets')[copyIndex('subnets')].name)]",
+                    "nsg": "[if(contains(parameters('subnets')[copyIndex('subnets')], 'nsg'), nsg.id(parameters('nsgResourceGroup'), parameters('subnets')[copyIndex('subnets')].nsg), '')]"
+                }
+            }
+        ],
+        "dnsObject": {
+            "dnsServers": "[parameters('dnsServers')]"
+        },
+        "vnet": {
+            "name": "[parameters('vnetName')]",
+            "addressPrefixes": "[parameters('vNetAddressPrefixes')]",
+            "id": "[resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
+            "dhcpOptions": "[if(empty(parameters('dnsServers')), json('null'), variables('dnsObject'))]",
+            "subnets": "[variables('subnets')]"
+        }
+    },
+    "resources": [
+        {
+            "condition": "[parameters('createVnet')]",
+            "name": "[variables('vnet').name]",
+            "comments": "Virtual Network only - create subnets separately",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2018-08-01",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[variables('vnet').addressPrefixes]"
+                },
+                "dhcpOptions": "[variables('vnet').dhcpOptions]"
+            }
+        },
+        {
+            "name": "[concat(variables('vnet').name, '/', variables('vnet').subnets[copyIndex()].name)]",
+            "comments": "Loop through subnets and add",
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2018-08-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('vnet').name]"
+            ],
+            "copy": {
+                "name": "subnets",
+                "count": "[length(variables('vnet').subnets)]",
+                "mode": "Serial",
+                "batchSize": 1
+            },
+            "properties": {
+                "addressPrefix": "[variables('vnet').subnets[copyIndex()].addressPrefix]",
+                "networkSecurityGroup": "[if(empty(variables('vnet').subnets[copyIndex()].nsg), json('null'), json(concat('{\"id\": \"', variables('vnet').subnets[copyIndex()].nsg, '\"}')))]"
+            }
+        }
+    ],
+    "outputs": {
+        "vnet": {
+            "type": "object",
+            "value": "[variables('vnet')]"
+        }
+    }
+}
