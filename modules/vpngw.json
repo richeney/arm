@@ -3,18 +3,52 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "vnetName": {
-            "type": "string"
-        },
+            "type": "string",
+            "metadata": {
+                "description": "Name for the virtual network."
+            }        },
         "vpnGwName": {
             "type": "string",
             "metadata": {
                 "description": "Name for the VPN Gateway."
             }
+        },
+        "gatewaySku": {
+            "type": "string",
+            "defaultValue": "VpnGw1",
+            "allowedValues": [
+                "VpnGw1",
+                "VpnGw2",
+                "VpnGw3",
+                "VpnGw1AZ",
+                "VpnGw2AZ",
+                "VpnGw3AZ"
+            ],
+            "metadata": {
+                "description": "The SKU of the VPN gateway."
+            }
+        },
+        "pipSku": {
+            "type": "string",
+            "defaultValue": "[if(endswith(parameters('gatewaySku'), 'AZ'), 'Standard', 'Basic')]",
+            "allowedValues": [
+                "Basic",
+                "Standard"
+            ],
+            "metadata": {
+                "description": "The SKU for the public IP address. Standard is required for availability zone aware VPN gateway SKUs."
+            }
+        },
+        "asNumber": {
+           "type": "int",
+           "defaultValue": 65515,
+           "metadata": {
+                "description": "The BPH speaker's ASN."
+            }
         }
     },
     "variables": {
-        "vpnGwPipName": "[concat(parameters('vpnGwName'), '-pip')]",
-        "asNumber": 65515
+        "vpnGwPipName": "[concat(parameters('vpnGwName'), '-pip')]"
     },
     "resources": [
         {
@@ -36,6 +70,9 @@
             "dependsOn": [
                 "[variables('vpnGwPipName')]"
             ],
+            "sku": {
+                "name": "[parameters('pipSku')]"
+            },
             "properties": {
                 "ipConfigurations": [
                     {
@@ -53,15 +90,15 @@
                 ],
                 "gatewayType": "Vpn",
                 "sku": {
-                    "name": "VpnGw1",
-                    "tier": "VpnGw1",
+                    "name": "[parameters('gatewaySku')]",
+                    "tier": "[parameters('gatewaySku')]",
                     "capacity": 2
                 },
                 "gatewaySize": "Default",
                 "vpnType": "RouteBased",
                 "enableBgp": "true",
                 "bgpSettings": {
-                    "asn": "[variables('asNumber')]"
+                    "asn": "[parameters('asNumber')]"
                 }
             }
         }

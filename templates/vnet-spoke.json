@@ -10,9 +10,9 @@
     "hub": {
       "type": "object",
       "defaultValue": {
-        "resourceGroup": "core",
+        "resourceGroup": "shared",
         "vnet": {
-          "name": "core"
+          "name": "hub"
         }
       },
       "metadata": {
@@ -23,7 +23,7 @@
       "type": "object",
       "defaultValue": {
         "vnet": {
-          "name": "Spoke",
+          "name": "spoke",
           "addressPrefixes": [ "10.99.0.0/16" ]
         },
         "subnets": [

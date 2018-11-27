@@ -18,12 +18,9 @@
         },
         "tags": {
             "type": "object",
-            "defaultValue": {
-                "environment": "test",
-                "source": "ARM template"
-            },
+            "defaultValue": {},
             "metadata": {
-                "description": "Object containing name:value pair tags - MAKE MY DEFAULT EMPTY!!!!!!"
+                "description": "Object containing name:value pair tags, defaults to those of the resource group"
             }
         },
         "vnetName": {
@@ -146,15 +143,24 @@
         }
     ],
     "variables": {
+        "dummyArray": [
+            {
+                "comment": "ARM doesn't currently permit zero count in copy",
+                "addressPrefix": "10.0.1.0/24",
+                "name": "subnet1"
+            }
+        ],
+        "createSubnets": "[if(greater(length(parameters('subnets')), 0) , bool('true'), bool('false'))]",
+        "_sn": "[if(variables('createSubnets'), parameters('subnets'), variables('dummyArray'))]",
         "copy": [
             {
                 "name": "subnets",
-                "count": "[length(parameters('subnets'))]",
+                "count": "[length(variables('_sn'))]",
                 "input": {
-                    "name": "[parameters('subnets')[copyIndex('subnets')].name]",
-                    "addressPrefix": "[parameters('subnets')[copyIndex('subnets')].addressPrefix]",
-                    "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName')), '/subnets/', parameters('subnets')[copyIndex('subnets')].name)]",
-                    "nsg": "[if(contains(parameters('subnets')[copyIndex('subnets')], 'nsg'), nsg.id(parameters('nsgResourceGroup'), parameters('subnets')[copyIndex('subnets')].nsg), '')]"
+                    "name": "[variables('_sn')[copyIndex('subnets')].name]",
+                    "addressPrefix": "[variables('_sn')[copyIndex('subnets')].addressPrefix]",
+                    "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName')), '/subnets/', variables('_sn')[copyIndex('subnets')].name)]",
+                    "nsg": "[if(contains(variables('_sn')[copyIndex('subnets')], 'nsg'), nsg.id(parameters('nsgResourceGroup'), variables('_sn')[copyIndex('subnets')].nsg), '')]"
                 }
             }
         ],
@@ -186,6 +192,7 @@
             }
         },
         {
+            "condition": "[variables('createSubnets')]",
             "name": "[concat(variables('vnet').name, '/', variables('vnet').subnets[copyIndex()].name)]",
             "comments": "Loop through subnets and add",
             "type": "Microsoft.Network/virtualNetworks/subnets",
