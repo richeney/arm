@@ -50,7 +50,10 @@
         }
     },
     "variables": {
-        "vpnGwPipName": "[concat(parameters('vpnGwName'), '-pip')]"
+        "vpnGwPipName": "[concat(parameters('vpnGwName'), '-pip')]",
+        "bgpSettings": {
+            "asn": "[parameters('asNumber')]"
+        }
     },
     "resources": [
         {
@@ -98,10 +101,8 @@
                 },
                 "gatewaySize": "Default",
                 "vpnType": "RouteBased",
-                "enableBgp": "true",
-                "bgpSettings": {
-                    "asn": "[parameters('asNumber')]"
-                }
+                "enableBgp": "[equals(parameters('gatewaySku'), 'Basic')]",
+                "bgpSettings": "[if(equals(parameters('gatewaySku'), 'Basic'), variables('bgpSettings'), json('null'))]"
             }
         }
     ],
