@@ -107,6 +107,29 @@
                     }
                 }
             }
+        },
+        {
+            "name": "vpnGateway",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "dependsOn": [
+                "vNet"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(variables('baseUri'), 'modules/vpngw.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vnetName": {
+                        "value": "[parameters('vnetName')]"
+                    },
+                    "gatewaySku": {
+                        "value": "Basic"
+                    }
+                }
+            }
         }
     ],
     "outputs": {
