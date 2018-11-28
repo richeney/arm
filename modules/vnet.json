@@ -150,7 +150,7 @@
         }
     ],
     "variables": {
-        "defaultSubnetNsg": "[if(exists(parameters('defaultSubnetNsg')), nsg.id(parameters('nsgResourceGroup'), parameters('defaultSubnetNsg')), '')]",
+        "defaultSubnetNsg": "[if(empty(parameters('defaultSubnetNsg')), '', nsg.id(parameters('nsgResourceGroup'), parameters('defaultSubnetNsg')))]",
         "dummyArray": [
             {
                 "comment": "ARM doesn't currently permit zero count in copy",
