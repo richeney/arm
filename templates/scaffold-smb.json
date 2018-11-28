@@ -28,7 +28,7 @@
         },
         "createVpnGateway": {
            "type": "bool",
-           "defaultValue": "false",
+           "defaultValue": false,
            "metadata": {
                 "description": "Boolean to control creation of the VPN gateway."
             }
