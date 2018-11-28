@@ -66,6 +66,13 @@
                 "description": "Allow NSGs to be pulled from another resource group."
             }
         },
+        "defaultSubnetNSG": {
+           "type": "string",
+           "defaultValue": "",
+           "metadata": {
+                "description": "Default NSG to use if not specified in the subnet array."
+            }
+        },
         "subnetName": {
             "type": "string",
             "defaultValue": "",
@@ -160,7 +167,7 @@
                     "name": "[variables('_sn')[copyIndex('subnets')].name]",
                     "addressPrefix": "[variables('_sn')[copyIndex('subnets')].addressPrefix]",
                     "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName')), '/subnets/', variables('_sn')[copyIndex('subnets')].name)]",
-                    "nsg": "[if(contains(variables('_sn')[copyIndex('subnets')], 'nsg'), nsg.id(parameters('nsgResourceGroup'), variables('_sn')[copyIndex('subnets')].nsg), '')]"
+                    "nsg": "[if(contains(variables('_sn')[copyIndex('subnets')], 'nsg'), nsg.id(parameters('nsgResourceGroup'), variables('_sn')[copyIndex('subnets')].nsg), parameters('defaultSubnetNSG'))]"
                 }
             }
         ],

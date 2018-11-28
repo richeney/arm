@@ -6,7 +6,7 @@
         {
             "apiVersion": "2018-08-01",
             "type": "Microsoft.Network/networkSecurityGroups",
-            "name": "defaultResourceGroup",
+            "name": "defaultSubnetNSG",
             "location": "[resourceGroup().location]",
             "properties": {
                 "securityRules": [
@@ -84,7 +84,7 @@
             }
         },
         {
-            "name": "nic_ubuntu",
+            "name": "ubuntuNicNSG",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2018-08-01",
             "location": "[resourceGroup().location]",
@@ -108,7 +108,7 @@
             }
         },
         {
-            "name": "nic_windows",
+            "name": "windowsNicNSG",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2018-08-01",
             "location": "[resourceGroup().location]",

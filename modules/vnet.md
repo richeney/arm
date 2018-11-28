@@ -21,6 +21,7 @@ Virtual network module.  Allows simplified and flexible calling from other templ
 * vnetAddressPrefixes (array of multiple address spaces)
 * dnsServers (array of DNS server IPs)
 * nsgResourceGroup (used in combination with the subnet objects)
+* defaultSubnetNSG (default NSG name to apply to subnets if not specified explicitly )
 
 ### Rich arrays and objects
 
