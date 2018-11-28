@@ -57,8 +57,11 @@
             "comments": "Create public IP address for VPN Gateway",
             "name": "[variables('vpnGwPipName')]",
             "type": "Microsoft.Network/publicIPAddresses",
-            "apiVersion": "2017-10-01",
+            "apiVersion": "2018-08-01",
             "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "[parameters('pipSku')]"
+            },
             "properties": {
                 "publicIPAllocationMethod": "Dynamic"
             }
@@ -66,14 +69,14 @@
         {
             "comments": "Create a VPN gateway",
             "type": "Microsoft.Network/virtualNetworkGateways",
-            "apiVersion": "2017-10-01",
+            "apiVersion": "2018-08-01",
             "name": "[parameters('vpnGwName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[variables('vpnGwPipName')]"
             ],
             "sku": {
-                "name": "[parameters('pipSku')]"
+                "name": "[parameters('gatewaySku')]"
             },
             "properties": {
                 "ipConfigurations": [
