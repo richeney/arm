@@ -150,6 +150,7 @@
         }
     ],
     "variables": {
+        "defaultSubnetNsg": "[if(exists(parameters('defaultSubnetNsg')), nsg.id(parameters('nsgResourceGroup'), parameters('defaultSubnetNsg')), '')]",
         "dummyArray": [
             {
                 "comment": "ARM doesn't currently permit zero count in copy",
@@ -167,7 +168,7 @@
                     "name": "[variables('_sn')[copyIndex('subnets')].name]",
                     "addressPrefix": "[variables('_sn')[copyIndex('subnets')].addressPrefix]",
                     "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName')), '/subnets/', variables('_sn')[copyIndex('subnets')].name)]",
-                    "nsg": "[if(contains(variables('_sn')[copyIndex('subnets')], 'nsg'), nsg.id(parameters('nsgResourceGroup'), variables('_sn')[copyIndex('subnets')].nsg), parameters('defaultSubnetNSG'))]"
+                    "nsg": "[if(contains(variables('_sn')[copyIndex('subnets')], 'nsg'), nsg.id(parameters('nsgResourceGroup'), variables('_sn')[copyIndex('subnets')].nsg), variables('defaultSubnetNSG'))]"
                 }
             }
         ],
