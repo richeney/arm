@@ -102,7 +102,7 @@
                 "gatewaySize": "Default",
                 "vpnType": "RouteBased",
                 "enableBgp": "[equals(parameters('gatewaySku'), 'Basic')]",
-                "bgpSettings": "[if(equals(parameters('gatewaySku'), 'Basic'), variables('bgpSettings'), json('null'))]"
+                "bgpSettings": "[if(equals(parameters('gatewaySku'), 'Basic'), json('null'), variables('bgpSettings'))]"
             }
         }
     ],
