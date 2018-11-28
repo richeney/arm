@@ -25,6 +25,13 @@
             "metadata": {
                 "description": "Number of VM subnets to create."
             }
+        },
+        "createVpnGateway": {
+           "type": "bool",
+           "defaultValue": "false",
+           "metadata": {
+                "description": "Boolean to control creation of the VPN gateway."
+            }
         }
     },
     "variables": {
@@ -110,6 +117,7 @@
         },
         {
             "name": "vpnGateway",
+            "condition": "[parameters('createVpnGateway')]",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2018-05-01",
             "dependsOn": [
