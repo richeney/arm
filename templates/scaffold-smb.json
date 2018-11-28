@@ -82,7 +82,7 @@
         {
             "name": "vNet",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2017-05-10",
+            "apiVersion": "2018-05-01",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -90,11 +90,21 @@
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
-                    "vnetName": "[parameters('vnetName')]",
-                    "vnetAddressPrefix": "[parameters('vnetAddressPrefix')]",
-                    "subnets": "[variables('subnets')]",
-                    "nsgResourceGroup": "NSGs",
-                    "defaultSubnetNSG": "defaultSubnetNSG"
+                    "vnetName": {
+                        "value": "[parameters('vnetName')]"
+                    },
+                    "vnetAddressPrefix": {
+                        "value": "[parameters('vnetAddressPrefix')]"
+                    },
+                    "subnets": {
+                        "value": "[variables('subnets')]"
+                    },
+                    "nsgResourceGroup": {
+                        "value": "NSGs"
+                    },
+                    "defaultSubnetNSG": {
+                        "value": "defaultSubnetNSG"
+                    }
                 }
             }
         }
