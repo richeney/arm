@@ -75,9 +75,6 @@
             "dependsOn": [
                 "[variables('vpnGwPipName')]"
             ],
-            "sku": {
-                "name": "[parameters('gatewaySku')]"
-            },
             "properties": {
                 "ipConfigurations": [
                     {
