@@ -4,7 +4,17 @@
     "parameters": {
         "vnetName": {
             "type": "string",
-            "defaultValue": "vNet"
+            "defaultValue": "vNet",
+            "metadata": {
+                "description": "Name for the virtual network."
+            }
+        },
+        "backupVaultName": {
+            "type": "string",
+            "defaultValue": "[concat('backupVault-', guid(resourceGroup().id))]",
+            "metadata": {
+                "description": "Name for the Recovery Services vault used for VM backup."
+            }
         },
         "vnetAddressPrefix": {
             "type": "string",
@@ -27,9 +37,9 @@
             }
         },
         "createVpnGateway": {
-           "type": "bool",
-           "defaultValue": false,
-           "metadata": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
                 "description": "Boolean to control creation of the VPN gateway."
             }
         }
@@ -83,7 +93,8 @@
         },
         "subnets": "[take(variables('subnetRef')[parameters('vnetAddressPrefix')], add(parameters('numberOfSubnets'), 1))]",
         "repoUri": "https://github.com/richeney/azure-blueprints",
-        "baseUri": "[concat(replace(variables('repoUri'), 'github.com', 'raw.githubusercontent.com'), '/master/')]"
+        "baseUri": "[concat(replace(variables('repoUri'), 'github.com', 'raw.githubusercontent.com'), '/master/')]",
+        "tags": "[if(contains(resourceGroup(), 'tags'), resourceGroup().tags, json('{}'))]"
     },
     "resources": [
         {
@@ -137,6 +148,17 @@
                         "value": "Basic"
                     }
                 }
+            }
+        },
+        {
+            "name": "backupVault",
+            "type": "Microsoft.RecoveryServices/vaults",
+            "apiVersion": "2016-06-01",
+            "location": "[resourceGroup().location]",
+            "tags": "[variables('tags')]",
+            "properties": {},
+            "sku": {
+                "name": "RS0"
             }
         }
     ],
