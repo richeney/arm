@@ -6,7 +6,7 @@
             "type": "bool",
             "defaultValue": true,
             "metadata": {
-                "description": "Boolean to control creation of the vNet itself.  Useful if only adding subnets."
+                "description": "Boolean to control creation of the vNet itself.  Useful if adding subnets."
             }
         },
         "location": {
@@ -67,9 +67,9 @@
             }
         },
         "defaultSubnetNSG": {
-            "type": "string",
-            "defaultValue": "",
-            "metadata": {
+           "type": "string",
+           "defaultValue": "",
+           "metadata": {
                 "description": "Default NSG to use if not specified in the subnet array."
             }
         },
@@ -142,19 +142,15 @@
                         }
                     ],
                     "output": {
-                        "type": "array",
-                        "value": [
-                            {
-                                "id": "[if(startsWith(parameters('nsg'), '/subscriptions/'), parameters('nsg'), resourceId(parameters('rg'),'Microsoft.Network/networkSecurityGroups',parameters('nsg')))]"
-                            }
-                        ]
+                        "type": "string",
+                        "value": "[if(startsWith(parameters('nsg'), '/subscriptions/'), parameters('nsg'), resourceId(parameters('rg'), 'Microsoft.Network/networkSecurityGroups', parameters('nsg')))]"
                     }
                 }
             }
         }
     ],
     "variables": {
-        "defaultSubnetNsg": "[if(empty(parameters('defaultSubnetNsg')), json('[]'), nsg.id(parameters('nsgResourceGroup'), parameters('defaultSubnetNsg')))]",
+        "defaultSubnetNsg": "[if(empty(parameters('defaultSubnetNsg')), '', nsg.id(parameters('nsgResourceGroup'), parameters('defaultSubnetNsg')))]",
         "dummyArray": [
             {
                 "comment": "ARM doesn't currently permit zero count in copy",
@@ -172,7 +168,7 @@
                     "name": "[variables('_sn')[copyIndex('subnets')].name]",
                     "addressPrefix": "[variables('_sn')[copyIndex('subnets')].addressPrefix]",
                     "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName')), '/subnets/', variables('_sn')[copyIndex('subnets')].name)]",
-                    "networkSecurityGroup": "[if(contains(variables('_sn')[copyIndex('subnets')], 'nsg'), nsg.id(parameters('nsgResourceGroup'), variables('_sn')[copyIndex('subnets')].nsg), variables('defaultSubnetNSG'))]"
+                    "nsg": "[if(contains(variables('_sn')[copyIndex('subnets')], 'nsg'), nsg.id(parameters('nsgResourceGroup'), variables('_sn')[copyIndex('subnets')].nsg), variables('defaultSubnetNSG'))]"
                 }
             }
         ],
@@ -191,22 +187,22 @@
         {
             "condition": "[parameters('createVnet')]",
             "name": "[variables('vnet').name]",
-            "comments": "Create Virtual Network with optional subnets",
+            "comments": "Virtual Network only - create subnets separately",
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2018-08-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": "[variables('vnet').addressPrefixes]"
                 },
-                "dhcpOptions": "[variables('vnet').dhcpOptions]",
-                "subnets": "[variables('vnet').subnets]"
+                "dhcpOptions": "[variables('vnet').dhcpOptions]"
             }
         },
         {
-            "condition": "[and(variables('createSubnets'), not(parameters('createVnet')))]",
+            "condition": "[variables('createSubnets')]",
             "name": "[concat(variables('vnet').name, '/', variables('vnet').subnets[copyIndex()].name)]",
-            "comments": "Add subnets to existing vNet",
+            "comments": "Loop through subnets and add",
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "apiVersion": "2018-08-01",
             "location": "[parameters('location')]",
