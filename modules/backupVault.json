@@ -1,134 +1,128 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "parameters": {},
+    "parameters": {
+        "vaultName": {
+            "type": "string",
+            "defaultValue": "backupVault",
+            "metadata": {
+                "description": "Name for the backup vault."
+            }
+        },
+        "backupPolicyName": {
+            "type": "string",
+            "defaultValue": "vmBackupPolicy",
+            "metadata": {
+                "description": ""
+            }
+        },
+        "dailyRetention": {
+            "type": "int",
+            "defaultValue": 7,
+            "metadata": {
+                "description": "Number of days to retain daily backups."
+            }
+        },
+        "weeklyRetention": {
+            "type": "int",
+            "defaultValue": 4,
+            "metadata": {
+                "description": "Number of weeks to retain weekly backups."
+            }
+        },
+        "monthlyRetention": {
+            "type": "int",
+            "defaultValue": 13,
+            "metadata": {
+                "description": "Number of months to retain monthly backups."
+            }
+        },
+        "daysOfTheWeek": {
+            "type": "array",
+            "defaultValue": [
+                "Sunday"
+            ],
+            "metadata": {
+                "description": "Day of the week to run weekly backup(s)."
+            }
+        },
+        "scheduleRunTimes": {
+            "type": "array",
+            "defaultValue": [
+                "2018-01-01T22:30:00Z"
+            ],
+            "metadata": {
+                "description": "Time of day to run backup(s)"
+            }
+        }
+    },
+    "variables": {
+        "tags": "[if(contains(resourceGroup(), 'tags'), resourceGroup().tags, json('{}'))]"
+    },
     "resources": [
         {
-            "apiVersion": "2018-08-01",
-            "type": "Microsoft.Network/networkSecurityGroups",
-            "name": "defaultSubnetNSG",
+            "name": "[parameters('vaultName')]",
+            "type": "Microsoft.RecoveryServices/vaults",
+            "apiVersion": "2016-06-01",
             "location": "[resourceGroup().location]",
-            "properties": {
-                "securityRules": [
-                    {
-                        "name": "AllowSSH",
-                        "properties": {
-                            "description": "Allow incoming SSH",
-                            "protocol": "Tcp",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "22",
-                            "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 1010,
-                            "direction": "Inbound"
-                        }
-                    },
-                    {
-                        "name": "AllowHTTP",
-                        "properties": {
-                            "description": "Allow incoming HTTP",
-                            "protocol": "Tcp",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "80",
-                            "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 1020,
-                            "direction": "Inbound"
-                        }
-                    },
-                    {
-                        "name": "AllowHTTPS",
-                        "properties": {
-                            "description": "Allow incoming HTTPS",
-                            "protocol": "Tcp",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "443",
-                            "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 1030,
-                            "direction": "Inbound"
-                        }
-                    },
-                    {
-                        "name": "AllowSQLServer",
-                        "properties": {
-                            "description": "Allow incoming SQL Server connections",
-                            "protocol": "Tcp",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "1443",
-                            "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 1040,
-                            "direction": "Inbound"
-                        }
-                    },
-                    {
-                        "name": "AllowRDP",
-                        "properties": {
-                            "description": "Allow incoming RDP",
-                            "protocol": "Tcp",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "3389",
-                            "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 1050,
-                            "direction": "Inbound"
-                        }
-                    }
-                ]
+            "tags": "[variables('tags')]",
+            "properties": {},
+            "sku": {
+                "name": "RS0",
+                "tier": "Standard"
             }
         },
         {
-            "name": "ubuntuNicNSG",
-            "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2018-08-01",
+            "name": "[concat(parameters('vaultName'), '/', parameters('backupPolicyName'))]",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "apiVersion": "2016-12-01",
             "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
             "properties": {
-                "securityRules": [
-                    {
-                        "name": "AllowSSH",
-                        "properties": {
-                            "description": "Allow incoming SSH",
-                            "protocol": "Tcp",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "22",
-                            "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 1000,
-                            "direction": "Inbound"
-                        }
+                "backupManagementType": "AzureWorkload",
+                "schedulePolicy": {
+                    "schedulePolicyType": "SimpleSchedulePolicy",
+                    "scheduleRunDays": null,
+                    "scheduleRunFrequency": "Daily",
+                    "scheduleRunTimes": "[parameters('scheduleRunTimes')]"
+                },
+                "retentionPolicy": {
+                    "retentionPolicyType": "LongTermRetentionPolicy",
+                    "dailySchedule": {
+                        "retentionDuration": {
+                            "count": "[parameters('dailyRetention')]",
+                            "durationType": "Days"
+                        },
+                        "retentionTimes": "[parameters('scheduleRunTimes')]"
+                    },
+                    "weeklySchedule": {
+                        "daysOfTheWeek": "[parameters('daysOfTheWeek')]",
+                        "retentionDuration": {
+                            "count": "[parameters('weeklyRetention')]",
+                            "durationType": "Weeks"
+                        },
+                        "retentionTimes": "[parameters('scheduleRunTimes')]"
+                    },
+                    "monthlySchedule": {
+                        "retentionDuration": {
+                            "count": "[parameters('monthlyRetention')]",
+                            "durationType": "Months"
+                        },
+                        "retentionScheduleDaily": {
+                            "daysOfTheMonth": [
+                                {
+                                    "date": 1,
+                                    "isLast": false
+                                }
+                            ]
+                        },
+                        "retentionScheduleFormatType": "Daily",
+                        "retentionScheduleWeekly": null,
+                        "retentionTimes": "[parameters('scheduleRunTimes')]"
                     }
-                ]
-            }
-        },
-        {
-            "name": "windowsNicNSG",
-            "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2018-08-01",
-            "location": "[resourceGroup().location]",
-            "properties": {
-                "securityRules": [
-                    {
-                        "name": "AllowRDP",
-                        "properties": {
-                            "description": "Allow incoming RDP",
-                            "protocol": "Tcp",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "3389",
-                            "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 1000,
-                            "direction": "Inbound"
-                        }
-                    }
-                ]
+                }
             }
         }
     ]

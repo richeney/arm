@@ -152,13 +152,15 @@
         },
         {
             "name": "backupVault",
-            "type": "Microsoft.RecoveryServices/vaults",
-            "apiVersion": "2016-06-01",
-            "location": "[resourceGroup().location]",
-            "tags": "[variables('tags')]",
-            "properties": {},
-            "sku": {
-                "name": "RS0"
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(variables('baseUri'), 'modules/backupVault.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {}
             }
         }
     ],
