@@ -2,12 +2,16 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {},
+    "variables": {
+        "tags": "[if(contains(resourceGroup(), 'tags'), resourceGroup().tags, json('{}'))]"
+    },
     "resources": [
         {
             "apiVersion": "2018-08-01",
             "type": "Microsoft.Network/networkSecurityGroups",
             "name": "defaultSubnetNSG",
             "location": "[resourceGroup().location]",
+            "tags": "[variables('tags')]",
             "properties": {
                 "securityRules": [
                     {
@@ -88,6 +92,7 @@
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2018-08-01",
             "location": "[resourceGroup().location]",
+            "tags": "[variables('tags')]",
             "properties": {
                 "securityRules": [
                     {
@@ -112,6 +117,7 @@
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2018-08-01",
             "location": "[resourceGroup().location]",
+            "tags": "[variables('tags')]",
             "properties": {
                 "securityRules": [
                     {
