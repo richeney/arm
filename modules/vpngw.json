@@ -16,7 +16,7 @@
         },
         "gatewaySku": {
             "type": "string",
-            "defaultValue": "VpnGw1",
+            "defaultValue": "Basic",
             "allowedValues": [
                 "Basic",
                 "VpnGw1",
@@ -41,6 +41,13 @@
                 "description": "The SKU for the public IP address. Standard is required for availability zone aware VPN gateway SKUs."
             }
         },
+        "enableBgp": {
+           "type": "bool",
+           "defaultValue": "[not(equals(parameters('gatewaySku'), 'Basic'))]",
+           "metadata": {
+                "description": "Boolean to control whether BGP is set. Default is true unless SKU is Basic."
+            }
+        },
         "asNumber": {
            "type": "int",
            "defaultValue": 65515,
@@ -50,6 +57,7 @@
         }
     },
     "variables": {
+        "tags": "[if(contains(resourceGroup(), 'tags'), resourceGroup().tags, json('{}'))]",
         "vpnGwPipName": "[concat(parameters('vpnGwName'), '-pip')]",
         "bgpSettings": {
             "asn": "[parameters('asNumber')]"
@@ -62,6 +70,7 @@
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2018-08-01",
             "location": "[resourceGroup().location]",
+            "tags": "[variables('tags')]",
             "sku": {
                 "name": "[parameters('pipSku')]"
             },
@@ -75,6 +84,7 @@
             "apiVersion": "2018-08-01",
             "name": "[parameters('vpnGwName')]",
             "location": "[resourceGroup().location]",
+            "tags": "[variables('tags')]",
             "dependsOn": [
                 "[variables('vpnGwPipName')]"
             ],
@@ -101,8 +111,8 @@
                 },
                 "gatewaySize": "Default",
                 "vpnType": "RouteBased",
-                "enableBgp": "[equals(parameters('gatewaySku'), 'Basic')]",
-                "bgpSettings": "[if(equals(parameters('gatewaySku'), 'Basic'), json('null'), variables('bgpSettings'))]"
+                "enableBgp": "[parameters('enableBgp')]",
+                "bgpSettings": "[if(parameters('enableBgp'), variables('bgpSettings'), json('null'))]"
             }
         }
     ],
@@ -110,6 +120,10 @@
         "vpnGwPipId": {
             "type": "string",
             "value": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vpnGwPipName'))]"
+        },
+        "enableBgp": {
+            "type": "bool",
+            "value": "[parameters('enableBgp')]"
         }
     }
 }
