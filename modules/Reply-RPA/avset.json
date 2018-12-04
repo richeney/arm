@@ -32,8 +32,6 @@
         "subnetId": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
         "avsetName": "[concat(parameters('prefix'), '-AvailabilitySet')]",
         "lbName": "[concat(parameters('prefix'), '-lb')]",
-        "lbPipName": "[concat(parameters('prefix'), '-lb-pip')]",
-        "lbPipId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('lbPipName'))]",
         "vmUri": "[uri(deployment().properties.templateLink.uri, 'vm.json')]",
         "script": ""
     },
@@ -154,10 +152,5 @@
             }
         }
     ],
-    "outputs": {
-        "ipaddr": {
-            "type": "string",
-            "value": "[reference(variables('lbPipId')).ipAddress]"
-        }
-    }
+    "outputs": {}
 }
