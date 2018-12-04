@@ -3,9 +3,9 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "resourcePrefix": {
-           "type": "string",
-           "defaultValue": "RPA-",
-           "metadata": {
+            "type": "string",
+            "defaultValue": "RPA-",
+            "metadata": {
                 "description": "Prefix to prepend to all of the created resource."
             }
         },
@@ -29,14 +29,21 @@
             }
         },
         "dnsServers": {
-           "type": "array",
-           "defaultValue": [],
-           "metadata": {
+            "type": "array",
+            "defaultValue": [],
+            "metadata": {
                 "description": "Array of DNS servers",
                 "example": [
                     "1.1.1.1",
                     "1.0.0.1"
                 ]
+            }
+        },
+        "createVpnGateway": {
+           "type": "bool",
+           "defaultValue": true,
+           "metadata": {
+                "description": "Boolean to control VPN Gateway creation"
             }
         }
     },
@@ -44,13 +51,22 @@
         "f2oArray": "[take(split(parameters('addressPrefix'), '.'), 2)]",
         "f2o": "[string(concat(first(variables('f2oArray')), '.', last(variables('f2oArray'))))]",
         "addressPrefix": {
-            "GatewaySubnet":   "[concat(variables('f2o'), '.0.0/24')]",
-            "ClientTier":      "[concat(variables('f2o'), '.1.0/24')]",
+            "GatewaySubnet": "[concat(variables('f2o'), '.0.0/24')]",
+            "ClientTier": "[concat(variables('f2o'), '.1.0/24')]",
             "ApplicationTier": "[concat(variables('f2o'), '.2.0/24')]",
-            "DatabaseTier":    "[concat(variables('f2o'), '.3.0/24')]"
+            "DatabaseTier": "[concat(variables('f2o'), '.3.0/24')]"
         },
         "ApplicationTierNsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('resourcePrefix'), 'ApplicationTier'))]",
-        "DatabaseTierNsgId":    "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('resourcePrefix'), 'DatabaseTier'))]"
+        "DatabaseTierNsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('resourcePrefix'), 'DatabaseTier'))]",
+        "repoUri": "https://github.com/richeney/azure-blueprints",
+        "baseUri": "[concat(replace(variables('repoUri'), 'github.com', 'raw.githubusercontent.com'), '/master/')]",
+        "tags": "[if(contains(resourceGroup(), 'tags'), resourceGroup().tags, json('{}'))]",
+        "rg": {
+            "ClientTier": "[concat(resourceGroup().name, '-ClientTier')]",
+            "ApplicationTier": "[concat(resourceGroup().name, '-ApplicationTier')]",
+            "DatabaseTier": "[concat(resourceGroup().name, '-DatabaseTier')]"
+        }
+
     },
     "resources": [
         {
@@ -231,6 +247,30 @@
                         }
                     }
                 ]
+            }
+        },
+        {
+            "name": "[concat(parameters('resourcePrefix'), 'VpnGateway')]",
+            "condition": "[parameters('createVpnGateway')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "dependsOn": [
+                "[concat(parameters('resourcePrefix'), 'vNet')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(variables('baseUri'), 'modules/Reply-RPA/vpngw.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vnetName": {
+                        "value": "[concat(parameters('resourcePrefix'), 'vNet')]"
+                    },
+                    "gatewaySku": {
+                        "value": "VpnGw1"
+                    }
+                }
             }
         }
     ]
