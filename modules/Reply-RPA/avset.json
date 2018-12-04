@@ -8,8 +8,16 @@
         "subnetName": {
             "type": "string"
         },
+        "vNetResourceGroup": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                 "description": "Name of the resource gorup containing the vNet."
+             }
+         },
         "prefix": {
             "type": "string",
+            "defaultValue": "[resourceGroup().name]",
             "metadata": {
                 "description": "Prefix to be used for all resource names created by this template"
             }
@@ -20,14 +28,14 @@
         }
     },
     "variables": {
-        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]",
+        "vnetId": "[resourceId(parameters('vNetResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('vNetName'))]",
         "subnetId": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
         "avsetName": "[concat(parameters('prefix'), '-AvailabilitySet')]",
         "lbName": "[concat(parameters('prefix'), '-lb')]",
         "lbPipName": "[concat(parameters('prefix'), '-lb-pip')]",
         "lbPipId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('lbPipName'))]",
         "vmUri": "[uri(deployment().properties.templateLink.uri, 'vm.json')]",
-        "script": "DemoAppConfig.sh"
+        "script": ""
     },
     "resources": [
         {
@@ -45,24 +53,11 @@
             }
         },
         {
-            "comments": "Create public IP address for load balancer",
-            "name": "[variables('lbPipName')]",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "apiVersion": "2017-10-01",
-            "location": "[resourceGroup().location]",
-            "properties": {
-                "publicIPAllocationMethod": "Static"
-            }
-        },
-        {
-            "comments": "Create load balancer for spokes",
+            "comments": "Create load balancer",
             "name": "[variables('lbName')]",
             "type": "Microsoft.Network/loadBalancers",
             "apiVersion": "2017-10-01",
             "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('lbPipName'))]"
-            ],
             "properties": {
                 "frontendIPConfigurations": [
                     {
@@ -82,7 +77,7 @@
                 ],
                 "loadBalancingRules": [
                     {
-                        "name": "DemoAppRule",
+                        "name": "loadBalancingRule",
                         "properties": {
                             "frontendIPConfiguration": {
                                 "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('lbName')), '/frontendIpConfigurations/loadBalancerFrontEnd')]"
@@ -109,7 +104,7 @@
                             "numberOfProbes": 2,
                             "requestPath": "/"
                         },
-                        "name": "DemoAppProbe"
+                        "name": "probe"
                     }
                 ]
             }
@@ -136,6 +131,9 @@
                     "subnetName": {
                         "value": "[parameters('subnetName')]"
                     },
+                    "vNetResourceGroup": {
+                        "value": "[parameters('vNetResourceGroup')]"
+                    },
                     "vmName": {
                         "value": "[concat(parameters('prefix'), '-vm', copyIndex(1))]"
                     },
@@ -147,9 +145,6 @@
                     },
                     "lbName": {
                         "value": "[variables('lbName')]"
-                    },
-                    "pip?": {
-                        "value": false
                     }
                 }
             },
