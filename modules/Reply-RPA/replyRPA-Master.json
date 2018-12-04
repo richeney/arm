@@ -1,0 +1,237 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourcePrefix": {
+           "type": "string",
+           "defaultValue": "RPA-",
+           "metadata": {
+                "description": "Prefix to prepend to all of the created resource."
+            }
+        },
+        "addressPrefix": {
+            "type": "string",
+            "defaultValue": "10.2.0.0/16",
+            "allowedValues": [
+                "10.0.0.0/16",
+                "10.1.0.0/16",
+                "10.2.0.0/16",
+                "10.3.0.0/16",
+                "10.4.0.0/16",
+                "10.5.0.0/16",
+                "10.6.0.0/16",
+                "10.7.0.0/16",
+                "10.8.0.0/16",
+                "10.9.0.0/16"
+            ],
+            "metadata": {
+                "description": "CIDR address space for the vNet"
+            }
+        },
+        "dnsServers": {
+           "type": "array",
+           "defaultValue": [],
+           "metadata": {
+                "description": "Array of DNS servers",
+                "example": [
+                    "1.1.1.1",
+                    "1.0.0.1"
+                ]
+            }
+        }
+    },
+    "variables": {
+        "f2oArray": "[take(split(parameters('addressPrefix'), '.'), 2)]",
+        "f2o": "[string(concat(first(variables('f2oArray')), '.', last(variables('f2oArray'))))]",
+        "addressPrefix": {
+            "GatewaySubnet":   "[concat(variables('f2o'), '.0.0/24')]",
+            "ClientTier":      "[concat(variables('f2o'), '.1.0/24')]",
+            "ApplicationTier": "[concat(variables('f2o'), '.2.0/24')]",
+            "DatabaseTier":    "[concat(variables('f2o'), '.3.0/24')]"
+        },
+        "ApplicationTierNsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('resourcePrefix'), 'ApplicationTier'))]",
+        "DatabaseTierNsgId":    "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('resourcePrefix'), 'DatabaseTier'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('resourcePrefix'), 'vNet')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2018-08-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('addressPrefix')]"
+                    ]
+                },
+                "dhcpOptions": {
+                    "dnsServers": "[parameters('dnsServers')]"
+                },
+                "subnets": [
+                    {
+                        "name": "GatewaySubnet",
+                        "properties": {
+                            "addressPrefix": "[variables('addressPrefix').GatewaySubnet]"
+                        }
+                    },
+                    {
+                        "name": "[concat(parameters('resourcePrefix'), 'ClientTier')]",
+                        "properties": {
+                            "addressPrefix": "[variables('addressPrefix').ClientTier]"
+                        }
+                    },
+                    {
+                        "name": "[concat(parameters('resourcePrefix'), 'ApplicationTier')]",
+                        "properties": {
+                            "addressPrefix": "[variables('addressPrefix').ApplicationTier]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('ApplicationTierNsgId')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[concat(parameters('resourcePrefix'), 'DatabaseTier')]",
+                        "properties": {
+                            "addressPrefix": "[variables('addressPrefix').DatabaseTier]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('DatabaseTierNsgId')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2018-08-01",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[concat(parameters('resourcePrefix'), 'ApplicationTier')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AllowSSH",
+                        "properties": {
+                            "description": "Allow incoming SSH",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1010,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowHTTPS",
+                        "properties": {
+                            "description": "Allow incoming HTTPS",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1020,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowRDP",
+                        "properties": {
+                            "description": "Allow incoming RDP",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1030,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "RPA-Listener",
+                        "properties": {
+                            "description": "Listening port for the Blue Prism RPA application",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8199",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1040,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2018-08-01",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[concat(parameters('resourcePrefix'), 'DatabaseTier')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AllowSSH",
+                        "properties": {
+                            "description": "Allow incoming SSH",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1010,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowHTTPS",
+                        "properties": {
+                            "description": "Allow incoming HTTPS",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1020,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowSQLServer",
+                        "properties": {
+                            "description": "Allow incoming SQL Server connections",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "1443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1030,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowRDP",
+                        "properties": {
+                            "description": "Allow incoming RDP",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1040,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

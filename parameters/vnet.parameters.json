@@ -5,6 +5,9 @@
         "nsgResourceGroup": {
             "value": "NSGs"
         },
+        "defaultNSG": {
+            "value": "defaultSubnetNSG"
+        },
         "vnet": {
             "value": {
                 "name": "deleteme",
@@ -22,13 +25,15 @@
                     },
                     {
                         "name": "subnet1",
-                        "addressPrefix": "10.1.1.0/24",
-                        "nsg": "ResourceGroupDefault"
+                        "addressPrefix": "10.1.1.0/24"
                     },
                     {
                         "name": "subnet2",
-                        "addressPrefix": "10.1.2.0/24",
-                        "nsg": "ResourceGroupDefault"
+                        "addressPrefix": "10.1.2.0/24"
+                    },
+                    {
+                        "name": "subnet3",
+                        "addressPrefix": "10.1.3.0/24"
                     }
                 ]
             }

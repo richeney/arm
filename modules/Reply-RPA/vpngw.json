@@ -1,0 +1,129 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the virtual network."
+            }        },
+        "vpnGwName": {
+            "type": "string",
+            "defaultValue": "vpnGateway",
+            "metadata": {
+                "description": "Name for the VPN Gateway."
+            }
+        },
+        "gatewaySku": {
+            "type": "string",
+            "defaultValue": "Basic",
+            "allowedValues": [
+                "Basic",
+                "VpnGw1",
+                "VpnGw2",
+                "VpnGw3",
+                "VpnGw1AZ",
+                "VpnGw2AZ",
+                "VpnGw3AZ"
+            ],
+            "metadata": {
+                "description": "The SKU of the VPN gateway."
+            }
+        },
+        "pipSku": {
+            "type": "string",
+            "defaultValue": "[if(endswith(parameters('gatewaySku'), 'AZ'), 'Standard', 'Basic')]",
+            "allowedValues": [
+                "Basic",
+                "Standard"
+            ],
+            "metadata": {
+                "description": "The SKU for the public IP address. Standard is required for availability zone aware VPN gateway SKUs."
+            }
+        },
+        "enableBgp": {
+           "type": "bool",
+           "defaultValue": "[not(equals(parameters('gatewaySku'), 'Basic'))]",
+           "metadata": {
+                "description": "Boolean to control whether BGP is set. Default is true unless SKU is Basic."
+            }
+        },
+        "asNumber": {
+           "type": "int",
+           "defaultValue": 65515,
+           "metadata": {
+                "description": "The BGP speaker's ASN."
+            }
+        }
+    },
+    "variables": {
+        "tags": "[if(contains(resourceGroup(), 'tags'), resourceGroup().tags, json('{}'))]",
+        "vpnGwPipName": "[concat(parameters('vpnGwName'), '-pip')]",
+        "bgpSettings": {
+            "asn": "[parameters('asNumber')]"
+        }
+    },
+    "resources": [
+        {
+            "comments": "Create public IP address for VPN Gateway",
+            "name": "[variables('vpnGwPipName')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2018-08-01",
+            "location": "[resourceGroup().location]",
+            "tags": "[variables('tags')]",
+            "sku": {
+                "name": "[parameters('pipSku')]"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic"
+            }
+        },
+        {
+            "comments": "Create a VPN gateway",
+            "type": "Microsoft.Network/virtualNetworkGateways",
+            "apiVersion": "2018-08-01",
+            "name": "[parameters('vpnGwName')]",
+            "location": "[resourceGroup().location]",
+            "tags": "[variables('tags')]",
+            "dependsOn": [
+                "[variables('vpnGwPipName')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[concat(resourceID('Microsoft.Network/virtualNetworks', parameters('vnetName')), '/subnets/', 'GatewaySubnet')]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('vpnGwPipName'))]"
+                            }
+                        },
+                        "name": "[concat(parameters('vnetName'), 'vnetGwConfig')]"
+                    }
+                ],
+                "gatewayType": "Vpn",
+                "sku": {
+                    "name": "[parameters('gatewaySku')]",
+                    "tier": "[parameters('gatewaySku')]",
+                    "capacity": 2
+                },
+                "gatewaySize": "Default",
+                "vpnType": "RouteBased",
+                "enableBgp": "[parameters('enableBgp')]",
+                "bgpSettings": "[if(parameters('enableBgp'), variables('bgpSettings'), json('null'))]"
+            }
+        }
+    ],
+    "outputs": {
+        "vpnGwPipId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vpnGwPipName'))]"
+        },
+        "enableBgp": {
+            "type": "bool",
+            "value": "[parameters('enableBgp')]"
+        }
+    }
+}

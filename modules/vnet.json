@@ -18,7 +18,7 @@
         },
         "tags": {
             "type": "object",
-            "defaultValue": {},
+            "defaultValue": "[if(contains(resourceGroup(), 'tags'), resourceGroup().tags, json('{}'))]",
             "metadata": {
                 "description": "Object containing name:value pair tags, defaults to those of the resource group"
             }
@@ -66,9 +66,9 @@
                 "description": "Allow NSGs to be pulled from another resource group."
             }
         },
-        "defaultSubnetNSG": {
+        "defaultNsg": {
             "type": "string",
-            "defaultValue": "",
+            "defaultValue": "defaultSubnetNsg",
             "metadata": {
                 "description": "Default NSG to use if not specified in the subnet array."
             }
@@ -145,7 +145,7 @@
                         "type": "array",
                         "value": [
                             {
-                                "id": "[if(startsWith(parameters('nsg'), '/subscriptions/'), parameters('nsg'), resourceId(parameters('rg'),'Microsoft.Network/networkSecurityGroups',parameters('nsg')))]"
+                                "id": "[resourceId('myRG','Microsoft.Network/networkSecurityGroups', 'myResource' )]"
                             }
                         ]
                     }
@@ -154,7 +154,12 @@
         }
     ],
     "variables": {
-        "defaultSubnetNsg": "[if(empty(parameters('defaultSubnetNsg')), json('[]'), nsg.id(parameters('nsgResourceGroup'), parameters('defaultSubnetNsg')))]",
+        "subId": "[subscription().id]",
+        "nsgBase": "[concat(variables('subId'), '/resourceGroups/', parameters('nsgResourceGroup'), '/providers/Microsoft.Network/networkSecurityGroups/')]",
+        "concatString": "[concat('{\"id\": \"', variables('nsgBase'), parameters('defaultNsg'), '\"}')]",
+        "jsonObject": "[json(variables('concatString'))]",
+        "jsonArray": "[array(variables('jsonObject'))]",
+        "defaultSubnetNsg": "[if( empty(parameters('defaultNsg')), json('[]'), json(concat('[{\"id\": \"', variables('nsgBase'), parameters('defaultNsg'), '\"}]')))]",
         "dummyArray": [
             {
                 "comment": "ARM doesn't currently permit zero count in copy",
@@ -172,7 +177,7 @@
                     "name": "[variables('_sn')[copyIndex('subnets')].name]",
                     "addressPrefix": "[variables('_sn')[copyIndex('subnets')].addressPrefix]",
                     "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName')), '/subnets/', variables('_sn')[copyIndex('subnets')].name)]",
-                    "networkSecurityGroup": "[if(contains(variables('_sn')[copyIndex('subnets')], 'nsg'), nsg.id(parameters('nsgResourceGroup'), variables('_sn')[copyIndex('subnets')].nsg), variables('defaultSubnetNSG'))]"
+                    "networkSecurityGroup": "[json(concat('[{\"id\": \"', parameters('defaultNsg'), '\"}]'))]"
                 }
             }
         ],
@@ -187,45 +192,24 @@
             "subnets": "[variables('subnets')]"
         }
     },
-    "resources": [
-        {
-            "condition": "[parameters('createVnet')]",
-            "name": "[variables('vnet').name]",
-            "comments": "Create Virtual Network with optional subnets",
-            "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2018-08-01",
-            "location": "[resourceGroup().location]",
-            "properties": {
-                "addressSpace": {
-                    "addressPrefixes": "[variables('vnet').addressPrefixes]"
-                },
-                "dhcpOptions": "[variables('vnet').dhcpOptions]",
-                "subnets": "[variables('vnet').subnets]"
-            }
-        },
-        {
-            "condition": "[and(variables('createSubnets'), not(parameters('createVnet')))]",
-            "name": "[concat(variables('vnet').name, '/', variables('vnet').subnets[copyIndex()].name)]",
-            "comments": "Add subnets to existing vNet",
-            "type": "Microsoft.Network/virtualNetworks/subnets",
-            "apiVersion": "2018-08-01",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[variables('vnet').name]"
-            ],
-            "copy": {
-                "name": "subnets",
-                "count": "[length(variables('vnet').subnets)]",
-                "mode": "Serial",
-                "batchSize": 1
-            },
-            "properties": {
-                "addressPrefix": "[variables('vnet').subnets[copyIndex()].addressPrefix]",
-                "networkSecurityGroup": "[if(empty(variables('vnet').subnets[copyIndex()].nsg), json('null'), json(concat('{\"id\": \"', variables('vnet').subnets[copyIndex()].nsg, '\"}')))]"
-            }
-        }
-    ],
+    "resources": [],
     "outputs": {
+        "concatString": {
+            "type": "string",
+            "value": "[variables('concatString')]"
+        },
+        "jsonObject": {
+            "type": "object",
+            "value": "[variables('jsonObject')]"
+        },
+        "jsonArray": {
+            "type": "array",
+            "value": "[variables('jsonArray')]"
+        },
+        "defaultNsg": {
+            "type": "array",
+            "value": "[variables('defaultSubnetNsg')]"
+        },
         "vnet": {
             "type": "object",
             "value": "[variables('vnet')]"

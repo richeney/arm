@@ -1,0 +1,47 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "resources": [
+        {
+            "name": "vNetTest",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2018-08-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "dhcpOptions": {
+                    "dnsServers": [
+                        "1.1.1.1",
+                        "1.0.0.1"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "GatewaySubnet",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24",
+                            "networkSecurityGroup": {
+                                "id": "/subscriptions/2d31be49-d959-4415-bb65-8aec2c90ba62/resourceGroups/NSGs/providers/Microsoft.Network/networkSecurityGroups/defaultSubnetNSG",
+                                "resourceGroup": "NSGs"
+                            }
+                        }
+                    },
+                    {
+                        "name": "subnet1",
+                        "properties": {
+                            "addressPrefix": "10.0.1.0/24",
+                            "networkSecurityGroup": {
+                                "id": "/subscriptions/2d31be49-d959-4415-bb65-8aec2c90ba62/resourceGroups/NSGs/providers/Microsoft.Network/networkSecurityGroups/defaultSubnetNSG",
+                                "resourceGroup": "NSGs"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

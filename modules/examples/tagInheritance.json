@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountName": {
+           "type": "string",
+           "defaultValue": "[concat('stgacct', uniqueString(resourceGroup().id))]",
+           "metadata": {
+                "description": "Storage account name.",
+                "required": "3-24 chars, lower case alphanumberics, globally unique"
+            }
+        },
+        "tags": {
+           "type": "object",
+           "defaultValue": {},
+           "metadata": {
+                "description": "JSON object containing tag name value pairs.",
+                "example": {
+                    "environment":  "production",
+                    "owner":        "Richard Cheney",
+                    "costcode":     "31415927"
+                }
+            }
+        }
+    },
+    "variables": {
+        "resourceGroupTags": "[if(contains(resourceGroup(), 'tags'), resourceGroup().tags, json('{}'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('storageAccountName')]",
+            "apiVersion": "2018-07-01",
+            "location": "[resourceGroup().location]",
+            "tags": "[union(variables('resourceGroupTags'), parameters('tags'))]",
+            "kind": "StorageV2",
+            "sku": {
+                "name": "Standard_LRS"
+            }
+        }
+    ],
+    "outputs": {
+        "storageAccountName": {
+            "type": "string",
+            "value": "[parameters('storageAccountName')]"
+        }
+    }
+}
