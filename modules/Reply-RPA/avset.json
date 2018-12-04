@@ -78,13 +78,13 @@
                         "name": "loadBalancingRule",
                         "properties": {
                             "frontendIPConfiguration": {
-                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('lbName')), '/frontendIpConfigurations/loadBalancerFrontEnd')]"
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('lbName')), '/frontendIpConfigurations/LoadBalancerFrontEnd')]"
                             },
                             "backendAddressPool": {
                                 "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('lbName')), '/backendAddressPools/BackendPool')]"
                             },
                             "probe": {
-                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('lbName')), '/probes/DemoAppProbe')]"
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('lbName')), '/probes/Probe')]"
                             },
                             "protocol": "Tcp",
                             "frontendPort": 80,
@@ -102,7 +102,7 @@
                             "numberOfProbes": 2,
                             "requestPath": "/"
                         },
-                        "name": "probe"
+                        "name": "Probe"
                     }
                 ]
             }
