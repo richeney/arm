@@ -71,6 +71,9 @@
                     "uri": "[variables('uri').vnet]"
                 },
                 "parameters": {
+                    "nsgResourceGroup": {
+                        "value": "NSGs"
+                    },
                     "vnet": {
                         "value": {
                             "name": "hub",
@@ -88,7 +91,8 @@
                                 },
                                 {
                                     "addressPrefix": "10.4.1.0/24",
-                                    "name": "subnet1"
+                                    "name": "subnet1",
+                                    "nsg": "defaultSubnetNSG"
                                 }
                             ]
                         }
