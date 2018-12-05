@@ -28,14 +28,14 @@
     },
     "resources": [
         {
-            "name": "resourceGroup-NSGs",
+            "name": "NSGs",
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2018-05-01",
             "location": "[parameters('location')]",
             "properties": {}
         },
         {
-            "name": "resourceGroup-hub",
+            "name": "hub",
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2018-05-01",
             "location": "[parameters('location')]",
@@ -46,9 +46,6 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2018-05-01",
             "resourceGroup": "NSGs",
-            "dependsOn": [
-                "resourceGroup-NSGs"
-            ],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -57,23 +54,22 @@
             }
         },
         {
-            "name": "Deploy-vnet",
+            "name": "Deploy-vNet",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2018-05-01",
-            "resourceGroup": "deployment",
+            "resourceGroup": "hub",
             "dependsOn": [
                 "Deploy-NSGs"
             ],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[variables('uri').vnet]",
-                    "contentVersion": "1.0.0.0"
+                    "uri": "[variables('uri').vnet]"
                 },
                 "parameters": {
                     "vnet": {
                         "value": {
-                            "name": "test",
+                            "name": "hub",
                             "addressPrefixes": [
                                 "10.4.0.0/16"
                             ],
