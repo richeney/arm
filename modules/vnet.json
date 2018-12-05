@@ -142,7 +142,7 @@
                         }
                     ],
                     "output": {
-                        "type": "array",
+                        "type": "object",
                         "value": {
                                 "id": "[if(startsWith(parameters('nsg'), '/subscriptions/'), parameters('nsg'), resourceId(parameters('rg'),'Microsoft.Network/networkSecurityGroups',parameters('nsg')))]"
                         }
