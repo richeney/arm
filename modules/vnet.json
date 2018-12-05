@@ -154,7 +154,7 @@
     "variables": {
         "resourceGroupTags": "[if(contains(resourceGroup(), 'tags'), resourceGroup().tags, json('{}'))]",
         "tags": "[union(variables('resourceGroupTags'), parameters('tags'))]",
-        "defaultSubnetNsg": "[if(empty(parameters('defaultNsg')), json('{}'), json(concat('{\"id\": \"', resourceId(parameters('nsgResourceGroup'), 'Microsoft.Network/networkSecurityGroups', parameters('defaultNsg')), '\"}')))]",
+        "defaultSubnetNsg": "[if(empty(parameters('defaultNsg')), json('null'), json(concat('{\"id\": \"', resourceId(parameters('nsgResourceGroup'), 'Microsoft.Network/networkSecurityGroups', parameters('defaultNsg')), '\"}')))]",
         "dummyArray": [
             {
                 "comment": "ARM doesn't currently permit zero count in copy",
