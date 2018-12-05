@@ -68,7 +68,7 @@
         },
         "defaultNsg": {
             "type": "string",
-            "defaultValue": "defaultSubnetNsg",
+            "defaultValue": "",
             "metadata": {
                 "description": "Default NSG to use if not specified in the subnet array."
             }

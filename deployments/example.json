@@ -21,25 +21,48 @@
         "repoUri": "https://github.com/richeney/azure-blueprints",
         "baseUri": "[concat(replace(variables('repoUri'), 'github.com', 'raw.githubusercontent.com'), '/master/')]",
         "uri": {
+            "nsgs": "[concat(variables('baseUri'), 'modules/nsgs.json')]",
             "vnet": "[concat(variables('baseUri'), 'modules/vnet.json')]",
             "avset": "[concat(variables('baseUri'), 'modules/avset.json')]"
         }
     },
     "resources": [
         {
-            "name": "deployment",
+            "name": "resourceGroup-NSGs",
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2018-05-01",
             "location": "[parameters('location')]",
             "properties": {}
         },
         {
-            "name": "vnetDeployment",
+            "name": "resourceGroup-hub",
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[parameters('location')]",
+            "properties": {}
+        },
+        {
+            "name": "Deploy-NSGs",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "resourceGroup": "NSGs",
+            "dependsOn": [
+                "resourceGroup-NSGs"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('uri').nsgs]"
+                }
+            }
+        },
+        {
+            "name": "Deploy-vnet",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2018-05-01",
             "resourceGroup": "deployment",
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/resourceGroups/', 'deployment')]"
+                "Deploy-NSGs"
             ],
             "properties": {
                 "mode": "Incremental",
