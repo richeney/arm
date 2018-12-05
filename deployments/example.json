@@ -1,0 +1,78 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceGroupName": {
+            "type": "string",
+            "defaultValue": "deployment",
+            "metadata": {
+                "description": "The name of the resource group to be created."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "westeurope",
+            "metadata": {
+                "description": "The region for the resources."
+            }
+        }
+    },
+    "variables": {
+        "repoUri": "https://github.com/richeney/azure-blueprints",
+        "baseUri": "[concat(replace(variables('repoUri'), 'github.com', 'raw.githubusercontent.com'), '/master/')]",
+        "uri": {
+            "vnet": "[concat(variables('baseUri'), 'modules/vnet.json')]",
+            "avset": "[concat(variables('baseUri'), 'modules/avset.json')]"
+        }
+    },
+    "resources": [
+        {
+            "name": "deployment",
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[parameters('location')]",
+            "properties": {}
+        },
+        {
+            "name": "vnetDeployment",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "resourceGroup": "deployment",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups/', 'deployment')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('uri').vnet]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vnet": {
+                        "value": {
+                            "name": "test",
+                            "addressPrefixes": [
+                                "10.4.0.0/16"
+                            ],
+                            "dnsServers": [
+                                "1.1.1.1",
+                                "1.0.0.1"
+                            ],
+                            "subnets": [
+                                {
+                                    "addressPrefix": "10.4.0.0/24",
+                                    "name": "GatewaySubnet"
+                                },
+                                {
+                                    "addressPrefix": "10.4.1.0/24",
+                                    "name": "subnet1"
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}
