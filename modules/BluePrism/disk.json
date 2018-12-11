@@ -1,0 +1,89 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "guid": {
+           "type": "string",
+           "defaultValue": "",
+           "metadata": {
+                "description": "Optional GUID"
+            }
+        },
+        "sku": {
+           "type": "string",
+           "defaultValue": "StandardSSD_LRS",
+           "allowedValues": [
+               "Standard_LRS",
+               "StandardSSD_LRS",
+               "Premium_LRS",
+               "UltraSSD_LRS"
+           ],
+           "metadata": {
+                "description": "Managed disk SKU."
+            }
+        },
+        "location": {
+           "type": "string",
+           "defaultValue": "westeurope",
+           "metadata": {
+                "description": "Azure region."
+            }
+        },
+        "osType": {
+           "type": "string",
+           "allowedValues": [
+               "Linux",
+               "Windows"
+           ],
+           "defaultValue": "Linux",
+           "metadata": {
+                "description": "Operating system type."
+            }
+        },
+        "diskSizeGB": {
+           "type": "int",
+           "defaultValue": 128,
+           "metadata": {
+                "description": "Size of the disk in gibibytes (GiB)."
+            }
+        }
+    },
+    "variables": {
+        "diskname": "[if(empty(parameters('guid')), 'disk-noguid', concat('disk-', parameters('guid')))]"
+    },
+    "resources": [
+        {
+            "condition": "[not(empty(parameters('guid')))]",
+            "name": "[concat('pid-', parameters('guid'))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-02-01",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": []
+                }
+            }
+        },
+        {
+            "name": "[variables('diskname')]",
+            "type": "Microsoft.Compute/disks",
+            "apiVersion": "2018-06-01",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "sku": {
+              "name": "[parameters('sku')]"
+            },
+            "zones": [],
+            "properties": {
+              "osType": "[parameters('osType')]",
+              "creationData": {
+                "createOption": "Empty"
+              },
+              "diskSizeGB": "[parameters('diskSizeGB')]"
+            }
+          }
+    ],
+    "outputs": {}
+}
