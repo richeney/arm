@@ -1,16 +1,20 @@
 variable "guid" {
   type = "string"
+  description = "Generated Customer Usage Attribution GUID"
 }
 
+variable "test" {
+    type = "string"
+    description = "Test number"
+}
 
-resource "azurerm_resource_group" "guidtest" {
+data "azurerm_resource_group" "guidtest" {
   name     = "guidtest"
-  location = "westeurope"
 }
 
 resource "azurerm_managed_disk" "guidtest" {
-  name                 = "disk-${var.guid}"
-  location             = "westeurop"
+  name                 = "test${var.test}-${var.guid}"
+  location             = "westeurope"
   resource_group_name  = "${azurerm_resource_group.guidtest.name}"
   storage_account_type = "StandardSSD_LRS"
   create_option        = "Empty"
