@@ -14,6 +14,12 @@
             "metadata": {
                 "description": "Control whether the empty pid-<GUID> resource is deployed. Set to false if exporting AZURE_HTPP_USER_AGENT."
             }
+        },
+        "test": {
+           "type": "int",
+           "metadata": {
+                "description": "Test number"
+            }
         }
     },
     "resources": [
@@ -32,7 +38,7 @@
             }
         },
         {
-            "name": "[concat('disk-', parameters('guid'))]",
+            "name": "[concat('test', parameters('test'), '-', parameters('guid'))]",
             "type": "Microsoft.Compute/disks",
             "apiVersion": "2018-06-01",
             "location": "westeurope",
