@@ -81,7 +81,8 @@
                 "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
             ],
             "properties": {
-                "backupManagementType": "AzureWorkload",
+                "backupManagementType": "AzureIaasVM",
+                "timeZone": "UTC",
                 "schedulePolicy": {
                     "schedulePolicyType": "SimpleSchedulePolicy",
                     "scheduleRunDays": null,

@@ -2,11 +2,38 @@
     "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "resourceGroupName": {
-            "type": "string",
-            "defaultValue": "deployment",
+        "vnet": {
+            "type": "object",
+            "defaultValue": {
+                "name": "hub",
+                "addressPrefixes": [
+                    "10.0.50.0/16"
+                ],
+                "subnets": [
+                    {
+                        "addressPrefix": "10.0.50.240/28",
+                        "name": "GatewaySubnet"
+                    },
+                    {
+                        "addressPrefix": "10.0.50.0/25",
+                        "name": "subnet1",
+                        "nsg": "defaultSubnetNSG"
+                    }
+                ]
+            },
             "metadata": {
-                "description": "The name of the resource group to be created."
+                "description": "Object containing virtual network info."
+            }
+        },
+        "rg": {
+            "type": "object",
+            "defaultValue": {
+                "hub": "hub",
+                "nsgs": "NSGs",
+                "backup": "backupVault"
+            },
+            "metadata": {
+                "description": "Object containing the names of the resource groups to be created."
             }
         },
         "location": {
@@ -29,13 +56,14 @@
         "uri": {
             "nsgs": "[concat(variables('baseUri'), 'modules/nsgs.json')]",
             "vnet": "[concat(variables('baseUri'), 'modules/vnet.json')]",
-            "avset": "[concat(variables('baseUri'), 'modules/avset.json')]"
+            "avset": "[concat(variables('baseUri'), 'modules/avset.json')]",
+            "vm": "[concat(variables('baseUri'), 'modules/vm.json')]",
+            "backup": "[concat(variables('baseUri'), 'modules/backupVault.json')]"
         }
     },
     "resources": [
-
         {
-            "name": "hub",
+            "name": "[parameters('rg').hub]",
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2018-05-01",
             "location": "[parameters('location')]",
@@ -45,8 +73,11 @@
             "name": "Deploy-vNet",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2018-05-01",
-            "resourceGroup": "hub",
-            "dependsOn": [ "hub", "Deploy-NSGs" ],
+            "resourceGroup": "[parameters('rg').hub]",
+            "dependsOn": [
+                "[parameters('rg').hub]",
+                "Deploy-NSGs"
+            ],
             "properties": {
                 "parameters": {
                     "nsgResourceGroup": {
@@ -55,12 +86,24 @@
                     "vnet": {
                         "value": {
                             "name": "hub",
-                            "addressPrefixes": [ "10.4.0.0/16" ],
-                            "subnets": [
-                                { "addressPrefix": "10.4.0.0/24", "name": "GatewaySubnet" },
-                                { "addressPrefix": "10.4.1.0/24", "name": "subnet1", "nsg": "defaultSubnetNSG" }
+                            "addressPrefixes": [
+                                "10.4.0.0/16"
                             ],
-                            "dnsServers": [ "1.1.1.1", "1.0.0.1" ]
+                            "subnets": [
+                                {
+                                    "addressPrefix": "10.4.0.0/24",
+                                    "name": "GatewaySubnet"
+                                },
+                                {
+                                    "addressPrefix": "10.4.1.0/24",
+                                    "name": "subnet1",
+                                    "nsg": "defaultSubnetNSG"
+                                }
+                            ],
+                            "dnsServers": [
+                                "1.1.1.1",
+                                "1.0.0.1"
+                            ]
                         }
                     }
                 },
@@ -71,7 +114,7 @@
             }
         },
         {
-            "name": "NSGs",
+            "name": "[parameters('rg').nsgs]",
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2018-05-01",
             "location": "[parameters('location')]",
@@ -81,14 +124,36 @@
             "name": "Deploy-NSGs",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2018-05-01",
-            "resourceGroup": "NSGs",
+            "resourceGroup": "[parameters('rg').nsgs]",
             "dependsOn": [
-                "NSGs"
+                "[parameters('rg').nsgs]"
             ],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
                     "uri": "[variables('uri').nsgs]"
+                }
+            }
+        },
+        {
+            "name": "[parameters('rg').backup]",
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[parameters('location')]",
+            "properties": {}
+        },
+        {
+            "name": "Deploy-BackupVault",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "resourceGroup": "[parameters('rg').backup]",
+            "dependsOn": [
+                "[parameters('rg').backup]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('uri').backup]"
                 }
             }
         }
