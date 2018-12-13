@@ -1,0 +1,40 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vnet": {
+            "value": {
+                "name": "hub",
+                "addressPrefixes": [
+                    "10.0.50.0/16"
+                ],
+                "subnets": [
+                    {
+                        "addressPrefix": "10.0.50.240/28",
+                        "name": "GatewaySubnet"
+                    },
+                    {
+                        "addressPrefix": "10.0.50.0/25",
+                        "name": "subnet1",
+                        "nsg": "defaultSubnetNSG"
+                    },
+                    {
+                        "addressPrefix": "10.0.50.128/26",
+                        "name": "subnet2",
+                        "nsg": "defaultSubnetNSG"
+                    },
+                    {
+                        "addressPrefix": "10.0.50.192/27",
+                        "name": "subnet3",
+                        "nsg": "defaultSubnetNSG"
+                    },
+                    {
+                        "addressPrefix": "10.0.50.224/28",
+                        "name": "subnet4",
+                        "nsg": "defaultSubnetNSG"
+                    }
+                ]
+            }
+        }
+    }
+}
