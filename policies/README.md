@@ -30,8 +30,6 @@ az policy definition list --output table --query "[?policyType == 'Custom']"
 
 ## Create resource groups and assignments
 
-
-
 londonId=$(az group create --name london --location uksouth --query id --output tsv)
 
 az disk create --resource-group london --name northeurope --location northeurope --sku Standard_LRS --size-gb 32 --output jsonc
@@ -48,4 +46,76 @@ Operation failed with status: 'Forbidden'. Details: 403 Client Error: Forbidden 
 
 Takes up to 30 minutes for the policy compliance to start.  Be patient.
 
+
+
 ## OK, add parameters
+
+az policy definition create --name costcode --description "Require costcode tag to be specified from approved list" --display-name "Cost Code required" --rules policies/costcode.rule.json --params policies/costcode.params.json --management-group Production
+
+Needs a leading directory if relative e.g. `policies/name.rule.json`- cannot use files in current directory or dot notation.  Absolute pathing is fine as are uris.
+
+mgmt=Production
+policy=costcode
+mgmtId=/providers/Microsoft.Management/managementGroups/$mgmt
+policyId=$mgmtId/providers/Microsoft.Authorization/policyDefinitions/costcode
+
+
+az policy definition show --name $policy --management-group $mgmt --query parameters
+{
+  "costcodes": {
+    "metadata": {
+      "description": "The list of permitted cost codes.",
+      "displayName": "Cost Codes"
+    },
+    "type": "Array"
+  }
+}
+
+costcodes='{"costcodes":{"value":[ "31415926536", "2718281828", "161803399887" ]}}'
+echo $costcodes | jq .
+
+
+/git/azure-blueprints (master) $ az policy assignment create --name costcode --display-name "Require costcode tag from list" --policy $policyId --scope $mgmtId --params "$costcodes"
+
+```json
+{
+  "description": null,
+  "displayName": "Require costcode tag from list",
+  "id": "/providers/Microsoft.Management/managementGroups/Production/providers/Microsoft.Authorization/policyAssignments/costcode",
+  "metadata": null,
+  "name": "costcode",
+  "notScopes": null,
+  "parameters": {
+    "costcodes": {
+      "value": [
+        "31415926536",
+        "2718281828",
+        "161803399887"
+      ]
+    }
+  },
+  "policyDefinitionId": "/providers/Microsoft.Management/managementgroups/Production/providers/Microsoft.Authorization/policyDefinitions/costcode",
+  "scope": "/providers/Microsoft.Management/managementGroups/Production",
+  "sku": {
+    "name": "A0",
+    "tier": "Free"
+  },
+  "type": "Microsoft.Authorization/policyAssignments"
+}
+```
+
+## Prove Azure Policy compliancy
+
+Should be 67% (check screenshots folder)
+
+Remove the northeurope disk.  (Trust me to pick a resource type that doesn't migrate easily.)
+
+Remove the standalone policy at the group level:
+
+az policy assignment delete --name uk --resource-group london
+
+## Create a disk with no tags and one with tags
+
+az disk create --resource-group london --name tagless --location uksouth --sku Standard_LRS --size-gb 32 --output jsonc
+
+OK policy definition and assigment is not showing up in the portal within the Management Group details. Aaargh!
