@@ -1,0 +1,9 @@
+{
+    "costcodes": {
+        "type": "Array",
+        "metadata": {
+            "description": "The list of permitted cost codes.",
+            "displayName": "Cost Codes"
+        }
+    }
+}

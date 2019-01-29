@@ -1,0 +1,17 @@
+{
+    "if": {
+        "anyOf": [
+            {
+                "field": "tags",
+                "containsKey": "costcode"
+            },
+            {
+                "field": "tags.costcode",
+                "notIn": "[parameters('costcodes')]"
+            }
+        ]
+    },
+    "then": {
+        "effect": "deny"
+    }
+}
