@@ -1,0 +1,152 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "networkAdminsGuid": {
+            "type": "string",
+            "metadata": {
+                "description": "Object GUID for the network admins group in AAD."
+            }
+        },
+        "vnet": {
+            "type": "object",
+            "defaultValue": {
+                "name": "hub",
+                "addressPrefixes": [
+                    "10.4.0.0/16"
+                ],
+                "subnets": [
+                    {
+                        "addressPrefix": "10.4.0.0/24",
+                        "name": "GatewaySubnet"
+                    },
+                    {
+                        "addressPrefix": "10.4.1.0/24",
+                        "name": "subnet1",
+                        "nsg": "defaultSubnetNSG"
+                    }
+                ],
+                "dnsServers": [
+                    "1.1.1.1",
+                    "1.0.0.1"
+                ]
+            },
+            "metadata": {
+                "description": "Object containing virtual network info."
+            }
+        },
+        "rg": {
+            "type": "object",
+            "defaultValue": {
+                "hub": "gbb-hub",
+                "nsgs": "gbb-NSGs"
+            },
+            "metadata": {
+                "description": "Object containing the names of the resource groups to be created."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "westeurope",
+            "allowedValues": [
+                "westeurope",
+                "northeurope"
+            ],
+            "metadata": {
+                "description": "The region for the resources."
+            }
+        }
+    },
+    "variables": {
+        "repoUri": "https://github.com/richeney/azure-blueprints",
+        "baseUri": "[concat(replace(variables('repoUri'), 'github.com', 'raw.githubusercontent.com'), '/master/')]",
+        "uri": {
+            "nsgs": "[concat(variables('baseUri'), 'modules/nsgs.json')]",
+            "vnet": "[concat(variables('baseUri'), 'modules/vnet.json')]"
+        },
+        "networkContributorRoleGuid": "4d97b98b-1d4f-4787-a291-c67834d212e7"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "name": "[guid(parameters('networkAdminsGuid'), deployment().name)]",
+            "apiVersion": "2017-09-01",
+            "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('networkContributorRoleGuid'))]",
+                "principalId": "[parameters('networkAdminsGuid')]"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/policyAssignments",
+            "name": "ApplyDiagnosticsToNsgs",
+            "apiVersion": "2018-03-01",
+            "properties": {
+                "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/c9c29499-c1d1-4195-99bd-2ec9e3a9dc89",
+                "scope": "[subscription().id]",
+                "parameters": {
+                    "rgName": {
+                        "value": "[parameters('rg').nsgs]"
+                    },
+                    "storagePrefix": {
+                        "value": "nsgdiags"
+                    }
+                }
+            }
+        },
+        {
+            "name": "[parameters('rg').hub]",
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[parameters('location')]",
+            "properties": {}
+        },
+
+        {
+            "name": "Deploy-vNet",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "resourceGroup": "[parameters('rg').hub]",
+            "dependsOn": [
+                "[parameters('rg').hub]",
+                "Deploy-NSGs"
+            ],
+            "properties": {
+                "parameters": {
+                    "nsgResourceGroup": {
+                        "value": "[parameters('rg').nsgs]"
+                    },
+                    "vnet": {
+                        "value": "[parameters('vnet')]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[variables('uri').vnet]"
+                },
+                "mode": "Incremental"
+            }
+        },
+        {
+            "name": "[parameters('rg').nsgs]",
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[parameters('location')]",
+            "properties": {}
+        },
+        {
+            "name": "Deploy-NSGs",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "resourceGroup": "[parameters('rg').nsgs]",
+            "dependsOn": [
+                "[parameters('rg').nsgs]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('uri').nsgs]"
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}
