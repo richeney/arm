@@ -1,9 +1,0 @@
-{
-    "if": {
-        "field": "location",
-        "notIn": [ "uksouth", "ukwest" ]
-    },
-    "then": {
-        "effect": "deny"
-    }
-}

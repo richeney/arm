@@ -1,0 +1,92 @@
+[
+    {
+        "comment": "Assign default tag value for maintenance",
+        "parameters": {
+            "tagName": {
+                "value": "Maintenance"
+            },
+            "tagValue": {
+                "value": "Tue:04:00-Tue:04:30"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/2a0e14a6-b0a6-4fab-991a-187a4f81c498"
+    },
+    {
+        "comment": "Audit owner tag",
+        "parameters": {
+            "tagName": {
+                "value": "Owner"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Management/managementgroups/f246eeb7-b820-4971-a083-9e100e084ed0/providers/Microsoft.Authorization/policyDefinitions/audittag"
+    },
+    {
+        "comment": "Audit department tag",
+        "parameters": {
+            "tagName": {
+                "value": "Department"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Management/managementgroups/f246eeb7-b820-4971-a083-9e100e084ed0/providers/Microsoft.Authorization/policyDefinitions/audittag"
+    },
+    {
+        "comment": "Audit application tag",
+        "parameters": {
+            "tagName": {
+                "value": "Application"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Management/managementgroups/f246eeb7-b820-4971-a083-9e100e084ed0/providers/Microsoft.Authorization/policyDefinitions/audittag"
+    },
+    {
+        "comment": "Assign parameterised tag value for environment",
+        "parameters": {
+            "tagName": {
+                "value": "Environment"
+            },
+            "tagValue": {
+                "value": "[parameters('environment')]"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/2a0e14a6-b0a6-4fab-991a-187a4f81c498"
+    },
+    {
+        "comment": "Enforce parameterised tag value for environment",
+        "parameters": {
+            "tagName": {
+                "value": "Environment"
+            },
+            "tagValue": {
+                "value": "[parameters('environment')]"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/1e30110a-5ceb-460c-a204-c1c3969c6d62"
+    },
+    {
+        "comment": "Assign parameterised default tag value for costcode",
+        "parameters": {
+            "tagName": {
+                "value": "Costcode"
+            },
+            "tagValue": {
+                "value": "[parameters('costcode')]"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/2a0e14a6-b0a6-4fab-991a-187a4f81c498"
+    },
+    {
+        "comment": "Audit costcode is in permitted list",
+        "parameters": {
+            "tagName": {
+                "value": "Costcode"
+            },
+            "tagValues": {
+                "value": "[parameters('costcodes')]"
+            },
+            "effect": {
+                "value": "audit"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Management/managementgroups/f246eeb7-b820-4971-a083-9e100e084ed0/providers/Microsoft.Authorization/policyDefinitions/audittagvalues"
+    }
+]

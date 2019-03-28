@@ -1,0 +1,29 @@
+{
+  "tagName": {
+    "metadata": {
+      "description": "Name of the tag, such as 'costcode'",
+      "displayName": "Tag Name"
+    },
+    "type": "String"
+  },
+  "tagValues": {
+    "metadata": {
+        "description": "The list of permitted tag values",
+        "displayName": "Tag Name"
+      },
+      "type": "Array"
+  },
+  "effect": {
+      "metadata": {
+        "description": "The effect if a resource fails the audit - either audit, deny or disabled.",
+        "displayName": "Effect"
+      },
+      "type": "String",
+      "defaultValue": "audit",
+      "allowedValues": [
+          "audit",
+          "deny",
+          "disabled"
+      ]
+  }
+}

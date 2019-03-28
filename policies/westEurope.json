@@ -1,9 +1,0 @@
-{
-    "if": {
-        "field": "location",
-        "notEquals": "westeurope"
-    },
-    "then": {
-        "effect": "deny"
-    }
-}

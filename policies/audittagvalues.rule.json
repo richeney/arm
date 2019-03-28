@@ -1,0 +1,17 @@
+{
+    "if": {
+        "anyOf": [
+            {
+                "field": "[concat('tags[', parameters('tagName'), ']')]",
+                "exists": "false"
+            },
+            {
+                "field": "[concat('tags[', parameters('tagName'), ']')]",
+                "notIn": "[parameters('tagValues')]"
+            }
+        ]
+    },
+    "then": {
+        "effect": "[parameters('effect')]"
+    }
+}
