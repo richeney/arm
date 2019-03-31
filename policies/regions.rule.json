@@ -1,0 +1,9 @@
+{
+    "if": {
+        "field": "location",
+        "notIn": "[parameters('regions')]"
+    },
+    "then": {
+        "effect": "deny"
+    }
+}

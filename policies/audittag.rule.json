@@ -4,6 +4,6 @@
     "field": "[concat('tags[', parameters('tagName'), ']')]"
   },
   "then": {
-    "effect": "audit"
+        "effect": "[parameters('effect')]"
   }
 }

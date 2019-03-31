@@ -39,6 +39,13 @@
                 "description": "Default effect for non-compliant resources"
             }
         },
+        "scope": {
+            "type": "string",
+            "defaultValue": "[subscription().id]",
+            "metadata": {
+                "description": "Scope within subscription for policy initiative assignment. Defaults to subscription."
+            }
+        },
         "location": {
             "type": "string",
             "defaultValue": "West Europe",
@@ -50,7 +57,6 @@
     },
     "variables": {
         "^": "'",
-        "scope": "[subscription().id]",
         "subscriptionPolicyResourceType": "[concat(subscription().id, '/providers/Microsoft.Authorization/policyDefinitions/')]",
         "subscriptionPolicySetResourceType": "[concat(subscription().id, '/providers/Microsoft.Authorization/policySetDefinitions/')]",
         "auditTagExistsPolicyId": "[concat(subscription().id, '/providers/Microsoft.Authorization/policyDefinitions/', 'auditTagExists')]",
@@ -330,17 +336,14 @@
             }
         },
         {
-            "name": "standardTags",
+            "name": "tags",
             "type": "Microsoft.Authorization/policyAssignments",
             "apiVersion": "2018-05-01",
             "location": "[parameters('location')]",
-            "dependsOn": [
-                "Tags"
-            ],
             "properties": {
                 "displayName": "Tags",
                 "policyDefinitionId": "[variables('policySetDefinitionId')]",
-                "scope": "[variables('scope')]",
+                "scope": "[parameters('scope')]",
                 "notScopes": [],
                 "parameters": {
                     "effect": {

@@ -1,0 +1,26 @@
+{
+    "listOfAllowedSKUs": {
+        "metadata": {
+            "description": "List of allowed VM SKUs from az vm list-sizes --location westeurope --output table",
+            "displayName": "Permitted VM SKUs"
+        },
+        "type": "Array",
+        "defaultValue": [
+            "Standard_A0",
+            "Standard_A1",
+            "Standard_A2",
+            "Standard_A3",
+            "Standard_A4",
+            "Standard_A5",
+            "Standard_B1ls",
+            "Standard_B1ms",
+            "Standard_B1s",
+            "Standard_B2ms",
+            "Standard_B2s",
+            "Standard_B4ms",
+            "Standard_B8ms",
+            "Standard_D2_v3",
+            "Standard_D2s_v3"
+        ]
+    }
+}

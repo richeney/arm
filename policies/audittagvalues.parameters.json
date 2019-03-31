@@ -15,15 +15,14 @@
     },
     "effect": {
         "metadata": {
-            "description": "The effect if a resource fails the audit - either audit, deny or disabled.",
+            "description": "The effect if a resource fails the audit - either audit or deny.",
             "displayName": "Effect"
         },
         "type": "String",
         "defaultValue": "audit",
         "allowedValues": [
             "audit",
-            "deny",
-            "disabled"
+            "deny"
         ]
     }
 }

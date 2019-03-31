@@ -1,0 +1,28 @@
+[
+    {
+        "comment": "Permitted regions",
+        "parameters": {
+            "regions": {
+                "value": "[parameters('regions')]"
+            }
+        },
+        "policyDefinitionId": "/subscriptions/2d31be49-d959-4415-bb65-8aec2c90ba62/providers/Microsoft.Authorization/policyDefinitions/regions"
+    },
+    {
+        "comment": "Permitted VM SKUs. Non-compliant SKUs will be denied.",
+        "parameters": {
+            "listOfAllowedSKUs": {
+                "value": [
+                    "Standard_B1ms",
+                    "Standard_B1s",
+                    "Standard_B2ms",
+                    "Standard_B2s",
+                    "Standard_B4ms",
+                    "Standard_D2_v3",
+                    "Standard_D2s_v3"
+                ]
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/cccc23c7-8427-4f53-ad12-b6a63eb452b3"
+    }
+]

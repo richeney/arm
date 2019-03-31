@@ -1,0 +1,10 @@
+{
+    "regions": {
+        "metadata": {
+            "description": "List of Azure regions permitted for deployments",
+            "displayName": "Permitted Regions",
+            "strongType": "location"
+        },
+        "type": "Array"
+    }
+}
