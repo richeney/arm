@@ -1,0 +1,364 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.1",
+    "parameters": {
+        "defaultEnvironment": {
+            "type": "string",
+            "allowedValues": [
+                "Prod",
+                "UAT",
+                "Test",
+                "Dev"
+            ],
+            "defaultValue": "Prod",
+            "metadata": {
+                "description": "Default environment"
+            }
+        },
+        "defaultCostCode": {
+            "type": "string",
+            "allowedValues": [
+                "3141592654",
+                "2718281828",
+                "1618033999"
+            ],
+            "defaultValue": "3141592654",
+            "metadata": {
+                "description": "Default cost code"
+            }
+        },
+        "effect": {
+            "type": "string",
+            "defaultValue": "audit",
+            "allowedValues": [
+                "audit",
+                "deny",
+                "disabled"
+            ],
+            "metadata": {
+                "description": "Default effect for non-compliant resources"
+            }
+        },
+        "scope": {
+            "type": "string",
+            "defaultValue": "[subscription().id]",
+            "metadata": {
+                "description": "Scope within subscription for policy initiative assignment. Defaults to subscription."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "West Europe",
+            "metadata": {
+                "description": "Location for the policy initiative assignment"
+            }
+        }
+    },
+    "variables": {
+        "^": "'",
+        "subscriptionPolicyResourceType": "[concat(subscription().id, '/providers/Microsoft.Authorization/policyDefinitions/')]",
+        "subscriptionPolicySetResourceType": "[concat(subscription().id, '/providers/Microsoft.Authorization/policySetDefinitions/')]",
+        "auditTagExistsPolicyId": "[concat(subscription().id, '/providers/Microsoft.Authorization/policyDefinitions/', 'auditTagExists')]",
+        "auditTagValuesPolicyId": "[concat(subscription().id, '/providers/Microsoft.Authorization/policyDefinitions/', 'auditTagValues')]",
+        "defaultTagPolicyId": "/providers/Microsoft.Authorization/policyDefinitions/2a0e14a6-b0a6-4fab-991a-187a4f81c498",
+        "enforceTagPolicyId": "/providers/Microsoft.Authorization/policyDefinitions/1e30110a-5ceb-460c-a204-c1c3969c6d62",
+        "policySetDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/policySetDefinitions/', 'tags')]",
+        "effects": [
+            "audit",
+            "deny",
+            "disabled"
+        ],
+        "environments": [
+            "Prod",
+            "UAT",
+            "Test",
+            "Dev"
+        ],
+        "costcodes": [
+            "3141592654",
+            "2718281828",
+            "1618033999"
+        ]
+    },
+    "resources": [
+        {
+            "name": "auditTagExists",
+            "type": "Microsoft.Authorization/policyDefinitions",
+            "apiVersion": "2018-05-01",
+            "properties": {
+                "policyType": "Custom",
+                "mode": "Indexed",
+                "displayName": "Audit that a tag exists",
+                "description": "Audit that the provided tag exists.",
+                "policyRule": {
+                    "if": {
+                        "field": "[trim(replace('  [concat(^tags[^,parameters(^tagName^),^]^)]  ', '^', variables('^')))]",
+                        "exists": "false"
+                    },
+                    "then": {
+                        "effect": "[trim(replace('  [parameters(^effect^)]  ', '^', variables('^')))]"
+                    }
+                },
+                "metadata": {},
+                "parameters": {
+                    "tagName": {
+                        "metadata": {
+                            "description": "Name of the tag, such as 'Owner'",
+                            "displayName": "Tag Name"
+                        },
+                        "defaultValue": "Owner",
+                        "type": "String"
+                    },
+                    "effect": {
+                        "metadata": {
+                            "description": "Effect if tag does not exist",
+                            "displayName": "Effect"
+                        },
+                        "defaultValue": "audit",
+                        "allowedValues": [
+                            "audit",
+                            "deny",
+                            "disabled"
+                        ],
+                        "type": "String"
+                    }
+                }
+            }
+        },
+        {
+            "name": "auditTagValues",
+            "type": "Microsoft.Authorization/policyDefinitions",
+            "apiVersion": "2018-05-01",
+            "properties": {
+                "policyType": "Custom",
+                "mode": "Indexed",
+                "displayName": "Audit tag value",
+                "description": "Audit that a tag exists and has an allowed value.",
+                "policyRule": {
+                    "if": {
+                        "anyOf": [
+                            {
+                                "field": "[trim(replace('  [concat(^tags[^,parameters(^tagName^),^]^)]  ', '^', variables('^')))]",
+                                "exists": "false"
+                            },
+                            {
+                                "field": "[trim(replace('  [concat(^tags[^,parameters(^tagName^),^]^)]  ', '^', variables('^')))]",
+                                "notIn": "[trim(replace('  [parameters(^tagValues^)]                 ', '^', variables('^')))]"
+                            }
+                        ]
+                    },
+                    "then": {
+                        "effect": "[trim(replace('  [parameters(^effect^)]  ', '^', variables('^')))]"
+                    }
+                },
+                "metadata": {},
+                "parameters": {
+                    "tagName": {
+                        "metadata": {
+                            "description": "Name of the tag, such as 'Environment'",
+                            "displayName": "Tag Name"
+                        },
+                        "defaultValue": "Environment",
+                        "type": "String"
+                    },
+                    "tagValues": {
+                        "metadata": {
+                            "description": "The list of permitted tag values",
+                            "displayName": "Tag Values"
+                        },
+                        "defaultValue": [
+                            "Prod",
+                            "Pre-Prod",
+                            "Test",
+                            "Dev"
+                        ],
+                        "type": "Array"
+                    },
+                    "effect": {
+                        "metadata": {
+                            "description": "Effect if tag does not exist",
+                            "displayName": "Effect"
+                        },
+                        "defaultValue": "audit",
+                        "allowedValues": [
+                            "audit",
+                            "deny",
+                            "disabled"
+                        ],
+                        "type": "String"
+                    }
+                }
+            }
+        },
+        {
+            "name": "tags",
+            "type": "Microsoft.Authorization/policySetDefinitions",
+            "apiVersion": "2018-05-01",
+            "dependsOn": [
+                "auditTagExists",
+                "auditTagValues"
+            ],
+            "properties": {
+                "policyType": "Custom",
+                "displayName": "Tags",
+                "description": "Tags to audit",
+                "metadata": {},
+                "policyDefinitions": [
+                    {
+                        "parameters": {
+                            "tagName": {
+                                "value": "Maintenance"
+                            },
+                            "tagValue": {
+                                "value": "Tue:04:00-Tue:04:30"
+                            }
+                        },
+                        "policyDefinitionId": "[variables('defaultTagPolicyId')]"
+                    },
+                    {
+                        "parameters": {
+                            "tagName": {
+                                "value": "Owner"
+                            },
+                            "effect": {
+                                "value": "[trim(replace('  [parameters(^effect^)]     ', '^', variables('^')))]"
+                            }
+                        },
+                        "policyDefinitionId": "[variables('auditTagExistsPolicyId')]"
+                    },
+                    {
+                        "parameters": {
+                            "tagName": {
+                                "value": "Department"
+                            },
+                            "effect": {
+                                "value": "[trim(replace('  [parameters(^effect^)]     ', '^', variables('^')))]"
+                            }
+                        },
+                        "policyDefinitionId": "[variables('auditTagExistsPolicyId')]"
+                    },
+                    {
+                        "parameters": {
+                            "tagName": {
+                                "value": "Application"
+                            },
+                            "effect": {
+                                "value": "[trim(replace('  [parameters(^effect^)]     ', '^', variables('^')))]"
+                            }
+                        },
+                        "policyDefinitionId": "[variables('auditTagExistsPolicyId')]"
+                    },
+                    {
+                        "parameters": {
+                            "tagName": {
+                                "value": "Environment"
+                            },
+                            "tagValue": {
+                                "value": "[trim(replace('  [parameters(^environment^)]  ', '^', variables('^')))]"
+                            }
+                        },
+                        "policyDefinitionId": "[variables('defaultTagPolicyId')]"
+                    },
+                    {
+                        "parameters": {
+                            "tagName": {
+                                "value": "Environment"
+                            },
+                            "tagValue": {
+                                "value": "[trim(replace('  [parameters(^environment^)]  ', '^', variables('^')))]"
+                            }
+                        },
+                        "policyDefinitionId": "[variables('enforceTagPolicyId')]"
+                    },
+                    {
+                        "parameters": {
+                            "tagName": {
+                                "value": "Costcode"
+                            },
+                            "tagValue": {
+                                "value": "[trim(replace('  [parameters(^costcode^)]  ', '^', variables('^')))]"
+                            }
+                        },
+                        "policyDefinitionId": "[variables('defaultTagPolicyId')]"
+                    },
+                    {
+                        "parameters": {
+                            "tagName": {
+                                "value": "Costcode"
+                            },
+                            "tagValues": {
+                                "value": "[trim(replace('  [parameters(^costcodes^)]  ', '^', variables('^')))]"
+                            },
+                            "effect": {
+                                "value": "[trim(replace('  [parameters(^effect^)]     ', '^', variables('^')))]"
+                            }
+                        },
+                        "policyDefinitionId": "[variables('auditTagValuesPolicyId')]"
+                    }
+                ],
+                "parameters": {
+                    "effect": {
+                        "type": "string",
+                        "metadata": {
+                            "description": "Effect if a resource fails compliancy.",
+                            "displayName": "Effect if non-compliant"
+                        },
+                        "defaultValue": "[parameters('effect')]",
+                        "allowedValues": "[variables('effects')]"
+                    },
+                    "environment": {
+                        "type": "string",
+                        "metadata": {
+                            "description": "Environment, from Prod, UAT, Test, Dev.",
+                            "displayName": "Environment"
+                        },
+                        "defaultValue": "[parameters('defaultEnvironment')]",
+                        "allowedValues": "[variables('environments')]"
+                    },
+                    "costcodes": {
+                        "type": "array",
+                        "metadata": {
+                            "description": "List of permitted cost codes as a JSON array.",
+                            "displayName": "Cost Codes"
+                        },
+                        "defaultValue": "[variables('costcodes')]"
+                    },
+                    "costcode": {
+                        "type": "string",
+                        "metadata": {
+                            "description": "Default cost code. Must be in the Cost Codes array. Will default to the first in the array.",
+                            "displayName": "Default Cost Code"
+                        },
+                        "defaultValue": "[parameters('defaultCostcode')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "tags",
+            "type": "Microsoft.Authorization/policyAssignments",
+            "apiVersion": "2018-05-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "displayName": "Tags",
+                "policyDefinitionId": "[variables('policySetDefinitionId')]",
+                "scope": "[parameters('scope')]",
+                "notScopes": [],
+                "parameters": {
+                    "effect": {
+                        "value": "[parameters('effect')]"
+                    },
+                    "environment": {
+                        "value": "[parameters('defaultEnvironment')]"
+                    },
+                    "costcode": {
+                        "value": "[parameters('defaultCostCode')]"
+                    }
+                },
+                "description": "string",
+                "metadata": {}
+            }
+        }
+    ],
+    "outputs": {}
+}
