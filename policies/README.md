@@ -471,26 +471,101 @@ The last of the tags is costcode.  We'll take a similar approach, defining a lis
 
 1. Extend the initiative parameters file
 
-    kjhkjh
+    ```json
+        "costcodes": {
+        "type": "array",
+        "metadata": {
+            "description": "List of permitted cost codes as a JSON array.",
+            "displayName": "Cost Codes"
+        },
+        "defaultValue": [
+            "3141592654",
+            "2718281828",
+            "1618033999"
+        ]
+    },
+    "costcode": {
+        "type": "string",
+        "metadata": {
+            "description": "Default cost code. Must be in the Cost Codes array. Will default to the first in the array.",
+            "displayName": "Default Cost Code"
+        },
+        "defaultValue": "3141592654"
+    }
+    ```
 
 1. Create a new policy that checks for existence in a list
 
     Create the two files
 
+    ```bash
     az policy definition create --name audittagvalues --display-name "Audit tag value" --description "Audit that a tag exists and has an allowed value. Control the effect." --mode Indexed --rules policies/audittagvalues.rule.json --params policies/audittagvalues.parameters.json --management-group $rootId --output jsonc
+    ```
 
 1. Extend the initiative definition file
 
-    jhjkh
+    ```json
+        {
+        "comment": "Assign parameterised default tag value for costcode",
+        "parameters": {
+            "tagName": {
+                "value": "Costcode"
+            },
+            "tagValue": {
+                "value": "[parameters('costcode')]"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/2a0e14a6-b0a6-4fab-991a-187a4f81c498"
+    },
+    {
+        "comment": "Audit costcode is in permitted list",
+        "parameters": {
+            "tagName": {
+                "value": "Costcode"
+            },
+            "tagValues": {
+                "value": "[parameters('costcodes')]"
+            },
+            "effect": {
+                "value": "audit"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Management/managementgroups/f246eeb7-b820-4971-a083-9e100e084ed0/providers/Microsoft.Authorization/policyDefinitions/audittagvalues"
+    }
+    ```
 
 1. Update the initiative
 
+    ```bash
     az policy set-definition update --name tags --management-group $rootId --definitions policies/tags.initiative.definition.json --params policies/tags.initiative.parameters.json --output jsonc
+    ```
 
 1. Update the assignment with additional parameters
 
+    ```bash
     devparams='{"environment": { "value": "Dev" }, "costcode": { "value": "2718281828"}}'
     echo $devparms | jq .
     az policy assignment create --name tags --display-name "Tags" --location westeurope --policy-set-definition $initiativeId --params "$devparams" --scope $devId --output jsonc
+    ```
 
-Add in tests and audit....
+1. Add in tests and audit....
+
+## Subscription Level Templates
+
+<https://docs.microsoft.com/en-us/azure/azure-resource-manager/deploy-to-subscription>
+
+Links to ARM reference (2018-05-01 schema versions):
+
+* [Policy Definitions](https://docs.microsoft.com/en-gb/azure/templates/microsoft.authorization/2018-05-01/policydefinitions)
+* [Policy Set Definitions](https://docs.microsoft.com/en-gb/azure/templates/microsoft.authorization/2018-05-01/policysetdefinitions)
+* [Policy Assignments](https://docs.microsoft.com/en-gb/azure/templates/microsoft.authorization/2018-05-01/policyassignments)
+
+OK, create a file called tags.initiative.json:
+
+```json
+
+```
+
+```bash
+az deployment create --name tagInitiative --location westeurope --template-file policies/tags.initiative.json --output jsonc
+```
