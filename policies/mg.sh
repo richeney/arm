@@ -13,10 +13,10 @@ clear
 
 # Need Non-Prod with group 200 pre-created
 
-pe 'az account management-group create --name 230 --display-name "Dev" --parent 200'
-pe 'az account management-group list --output table'
-pe 'az account show'
-pe 'subscriptionId=$(az account show --output tsv --query id)'
-pe 'echo $subscriptionId'
-pe 'az account management-group subscription add --name 230 --subscription $subscriptionId'
-pe 'az account management-group show --name 200 --recurse --expand --output jsonc'
+_C=false _E=false pe 'az account management-group create --name 230 --display-name "Dev" --parent 200'
+_C=false _E=false pe 'az account management-group list --output table'
+_C=true  _E=false pe 'az account show'
+_C=true  _E=false pe 'subscriptionId=$(az account show --output tsv --query id)'
+_C=false _E=false pe 'echo $subscriptionId'
+_C=true  _E=false pe 'az account management-group subscription add --name 230 --subscription $subscriptionId'
+_C=false _E=false pe 'az account management-group show --name 200 --recurse --expand --output jsonc'
