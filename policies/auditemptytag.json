@@ -24,7 +24,7 @@
                     },
                     {
                         "field": "[concat('tags[', parameters('tagName'), ']')]",
-                        "matches": ""
+                        "match": ""
                     }
                 ]
             },
