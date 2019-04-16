@@ -1,0 +1,36 @@
+{
+    "type": "Microsoft.Authorization/policyDefinitions",
+    "name": "auditEmptyTagValue",
+    "properties": {
+        "displayName": "Audit tags exist and have a value",
+        "description": "This policy audits that a tag exists and has a non-empty value.",
+        "policyType": "Custom",
+        "mode": "Indexed",
+        "parameters": {
+            "tagName": {
+                "type": "String",
+                "metadata": {
+                    "description": "Name of the tag, e.g. 'Environment'",
+                    "displayName": "Tag Name"
+                }
+            }
+        },
+        "policyRule": {
+            "if": {
+                "anyOf": [
+                    {
+                        "exists": "false",
+                        "field": "[concat('tags[', parameters('tagName'), ']')]"
+                    },
+                    {
+                        "field": "[concat('tags[', parameters('tagName'), ']')]",
+                        "matches": ""
+                    }
+                ]
+            },
+            "then": {
+                "effect": "audit"
+            }
+        }
+    }
+}
