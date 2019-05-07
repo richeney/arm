@@ -1,0 +1,68 @@
+chema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceName": {
+            "value": "deleteme"
+        },
+        "location": {
+            "value": "westeurope"
+        },
+        "dnsPrefix": {
+            "value": "deleteme-dns"
+        },
+        "agentCount": {
+            "value": 2
+        },
+        "agentVMSize": {
+            "value": "Standard_DS2_v2"
+        },
+        "servicePrincipalClientId": {
+            "value": null
+        },
+        "servicePrincipalClientSecret": {
+            "value": null
+        },
+        "kubernetesVersion": {
+            "value": "1.11.9"
+        },
+        "networkPlugin": {
+            "value": "azure"
+        },
+        "enableRBAC": {
+            "value": true
+        },
+        "enableHttpApplicationRouting": {
+            "value": false
+        },
+        "vnetSubnetID": {
+            "value": "/subscriptions/2d31be49-d959-4415-bb65-8aec2c90ba62/resourceGroups/deleteme/providers/Microsoft.Network/virtualNetworks/deleteme-vnet/subnets/default"
+        },
+        "serviceCidr": {
+            "value": "10.0.0.0/16"
+        },
+        "dnsServiceIP": {
+            "value": "10.0.0.10"
+        },
+        "dockerBridgeCidr": {
+            "value": "172.17.0.1/16"
+        },
+        "principalId": {
+            "value": "c255a2af-256c-4c54-ab93-ab696e8c6ad3"
+        },
+        "workspaceName": {
+            "value": "richeney-logs-workspace"
+        },
+        "omsWorkspaceId": {
+            "value": "/subscriptions/2d31be49-d959-4415-bb65-8aec2c90ba62/resourcegroups/logs/providers/microsoft.operationalinsights/workspaces/richeney-logs-workspace"
+        },
+        "workspaceRegion": {
+            "value": "westeurope"
+        },
+        "aciVnetSubnetName": {
+            "value": "virtual-node-aci"
+        },
+        "aciConnectorLinuxEnabled": {
+            "value": true
+        }
+    }
+}
