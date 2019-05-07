@@ -1,0 +1,16 @@
+{
+    "Environment": {
+        "type": "string",
+        "metadata": {
+            "description": "Environment, from permitted list",
+            "displayName": "Environment"
+        },
+        "defaultValue": "Dev",
+        "allowedValues": [
+            "Prod",
+            "UAT",
+            "Test",
+            "Dev"
+        ]
+    }
+}

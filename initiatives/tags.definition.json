@@ -1,0 +1,143 @@
+[
+    {
+        "comment": "Create Owner tag if it does not exist",
+        "parameters": {
+            "tagName": {
+                "value": "Owner"
+            },
+            "tagValue": {
+                "value": ""
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/2a0e14a6-b0a6-4fab-991a-187a4f81c498"
+    },
+    {
+        "comment": "Audit Owner tag if it is empty",
+        "parameters": {
+            "tagName": {
+                "value": "Owner"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Management/managementgroups/f246eeb7-b820-4971-a083-9e100e084ed0/providers/Microsoft.Authorization/policyDefinitions/auditEmptyTagValue"
+    },
+    {
+        "comment": "Create Department tag if it does not exist",
+        "parameters": {
+            "tagName": {
+                "value": "Department"
+            },
+            "tagValue": {
+                "value": ""
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/2a0e14a6-b0a6-4fab-991a-187a4f81c498"
+    },
+    {
+        "comment": "Check if Department is in the defined list",
+        "parameters": {
+            "tagName": {
+                "value": "Department"
+            },
+            "tagValues": {
+                "value": [
+                    "Finance",
+                    "Human Resources",
+                    "Logistics",
+                    "Sales",
+                    "IT"
+                ]
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Management/managementgroups/f246eeb7-b820-4971-a083-9e100e084ed0/providers/Microsoft.Authorization/policyDefinitions/auditTagValues"
+    },
+    {
+        "comment": "Create Application tag if it does not exist",
+        "parameters": {
+            "tagName": {
+                "value": "Application"
+            },
+            "tagValue": {
+                "value": ""
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/2a0e14a6-b0a6-4fab-991a-187a4f81c498"
+    },
+    {
+        "comment": "Audit Application tag if it is empty",
+        "parameters": {
+            "tagName": {
+                "value": "Application"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Management/managementgroups/f246eeb7-b820-4971-a083-9e100e084ed0/providers/Microsoft.Authorization/policyDefinitions/auditEmptyTagValue"
+    },
+    {
+        "comment": "Create Environment tag with parameters value if it does not exist",
+        "parameters": {
+            "tagName": {
+                "value": "Environment"
+            },
+            "tagValue": {
+                "value": "[parameters('Environment')]"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/2a0e14a6-b0a6-4fab-991a-187a4f81c498"
+    },
+    {
+        "comment": "Deny Environment tag if it isn't set to the parameter",
+        "parameters": {
+            "tagName": {
+                "value": "Environment"
+            },
+            "tagValue": {
+                "value": "[parameters('Environment')]"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/1e30110a-5ceb-460c-a204-c1c3969c6d62"
+    },
+    {
+        "comment": "Create Downtime tag if it does not exist, with default value",
+        "parameters": {
+            "tagName": {
+                "value": "Downtime"
+            },
+            "tagValue": {
+                "value": "Tuesday, 04:00-04:30"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/2a0e14a6-b0a6-4fab-991a-187a4f81c498"
+    },
+    {
+        "comment": "Audit Downtime tag if it is empty",
+        "parameters": {
+            "tagName": {
+                "value": "Downtime"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Management/managementgroups/f246eeb7-b820-4971-a083-9e100e084ed0/providers/Microsoft.Authorization/policyDefinitions/auditEmptyTagValue"
+    },
+    {
+        "comment": "Create Costcode tag if it does not exist",
+        "parameters": {
+            "tagName": {
+                "value": "Costcode"
+            },
+            "tagValue": {
+                "value": ""
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/2a0e14a6-b0a6-4fab-991a-187a4f81c498"
+    },
+    {
+        "comment": "Check that Costcode tag value is a six digit number",
+        "parameters": {
+            "tagName": {
+                "value": "Costcode"
+            },
+            "tagValuePattern": {
+                "value": "######"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/2a0e14a6-b0a6-4fab-991a-187a4f81c498"
+    }
+]
