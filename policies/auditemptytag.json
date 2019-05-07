@@ -2,7 +2,7 @@
     "type": "Microsoft.Authorization/policyDefinitions",
     "name": "auditEmptyTagValue",
     "properties": {
-        "displayName": "Audit tags exist and have a value",
+        "displayName": "Audit tag exists and has a value",
         "description": "This policy audits that a tag exists and has a non-empty value.",
         "policyType": "Custom",
         "mode": "Indexed",
