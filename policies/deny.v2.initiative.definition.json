@@ -1,0 +1,40 @@
+[
+    {
+        "comment": "Permitted regions",
+        "parameters": {
+            "listOfAllowedLocations": {
+                "value": [
+                    "UK South",
+                    "UK West"
+                ]
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c"
+    },
+    {
+        "comment": "Permitted VM SKUs. Non-compliant SKUs will be denied.",
+        "parameters": {
+            "listOfAllowedSKUs": {
+                "value": [
+                    "Standard_B1ms",
+                    "Standard_B1s",
+                    "Standard_B2ms",
+                    "Standard_B2s",
+                    "Standard_B4ms",
+                    "Standard_D2_v3",
+                    "Standard_D2s_v3"
+                ]
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/cccc23c7-8427-4f53-ad12-b6a63eb452b3"
+    },
+    {
+        "comment": "Naming: uk[sw]-[dtup]-<resourcetype>-<resourcename>01, where [dtup] is dev/test/UAT/production",
+        "parameters": {
+            "namePattern": {
+                "value": "uk?-?-??-?*?##"
+            }
+        },
+        "policyDefinitionId": "/providers/Microsoft.Management/managementgroups/f246eeb7-b820-4971-a083-9e100e084ed0/providers/Microsoft.Authorization/policyDefinitions/global-naming-convention"
+    }
+]
