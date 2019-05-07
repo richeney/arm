@@ -1,0 +1,15 @@
+{
+    "tagName": {
+        "type": "String",
+        "metadata": {
+            "description": "Name of the tag, e.g. 'Costcode'",
+            "displayName": "Tag Name"
+        }
+    },
+    "tagValuePattern": {
+        "type": "String",
+        "metadata": {
+            "description": "Pattern to use for names. Use ? for characters and # for numbers. Can include wildcard (*)."
+        }
+    }
+}

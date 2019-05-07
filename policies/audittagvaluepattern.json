@@ -1,0 +1,44 @@
+{
+    "type": "Microsoft.Authorization/policyDefinitions",
+    "name": "auditTagValuePattern",
+    "properties": {
+        "displayName": "Audit tag exists and that the value matches the pattern",
+        "description": "This policy audits that a tag exists and has a value that matches the specified pattern",
+        "policyType": "Custom",
+        "mode": "Indexed",
+        "parameters": {
+            "tagName": {
+                "type": "String",
+                "metadata": {
+                    "description": "Name of the tag, e.g. 'Costcode'",
+                    "displayName": "Tag Name"
+                }
+            },
+            "tagValuePattern": {
+                "type": "String",
+                "metadata": {
+                    "description": "Pattern to use for names. Use ? for characters and # for numbers. Can include wildcard (*)."
+                }
+            }
+        },
+        "policyRule": {
+            "if": {
+                "anyOf": [
+                    {
+                        "exists": "false",
+                        "field": "[concat('tags[', parameters('tagName'), ']')]"
+                    },
+                    {
+                        "not": {
+                            "field": "[concat('tags[', parameters('tagName'), ']')]",
+                            "like": "[parameters('tagValuePattern')]"
+                        }
+                    }
+                ]
+            },
+            "then": {
+                "effect": "audit"
+            }
+        }
+    }
+}
