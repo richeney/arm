@@ -1,0 +1,43 @@
+{
+    "type": "Microsoft.Authorization/policyDefinitions",
+    "name": "auditTagValues",
+    "properties": {
+        "displayName": "Audit tag exists and has a value from the allowedList",
+        "description": "This policy audits that a tag exists and has a value from the specified list",
+        "policyType": "Custom",
+        "mode": "Indexed",
+        "parameters": {
+            "tagName": {
+                "metadata": {
+                    "description": "Name of the tag, such as 'costcode'",
+                    "displayName": "Tag Name"
+                },
+                "type": "String"
+            },
+            "tagValues": {
+                "metadata": {
+                    "description": "The list of permitted tag values",
+                    "displayName": "Permitted Tag Values"
+                },
+                "type": "Array"
+            }
+        },
+        "policyRule": {
+            "if": {
+                "anyOf": [
+                    {
+                        "field": "[concat('tags[', parameters('tagName'), ']')]",
+                        "exists": "false"
+                    },
+                    {
+                        "field": "[concat('tags[', parameters('tagName'), ']')]",
+                        "notIn": "[parameters('tagValues')]"
+                    }
+                ]
+            },
+            "then": {
+                "effect": "audit"
+            }
+        }
+    }
+}
