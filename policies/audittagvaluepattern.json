@@ -23,16 +23,10 @@
         },
         "policyRule": {
             "if": {
-                "anyOf": [
-                    {
-                        "exists": "false",
-                        "field": "[concat('tags[', parameters('tagName'), ']')]"
-                    },
-                    {
-                        "field": "[concat('tags[', parameters('tagName'), ']')]",
-                        "notLike": "[parameters('tagValuePattern')]"
-                    }
-                ]
+                "not": {
+                    "field": "[concat('tags', parameters('tagName'))]",
+                    "like": "[parameters('tagValuePattern')]"
+                }
             },
             "then": {
                 "effect": "audit"
