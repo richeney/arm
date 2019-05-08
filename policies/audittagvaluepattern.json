@@ -29,10 +29,8 @@
                         "field": "[concat('tags[', parameters('tagName'), ']')]"
                     },
                     {
-                        "not": {
-                            "field": "[concat('tags[', parameters('tagName'), ']')]",
-                            "like": "[parameters('tagValuePattern')]"
-                        }
+                        "field": "[concat('tags[', parameters('tagName'), ']')]",
+                        "notLike": "[parameters('tagValuePattern')]"
                     }
                 ]
             },
