@@ -17,7 +17,7 @@
             "tagValuePattern": {
                 "type": "String",
                 "metadata": {
-                    "description": "Pattern to use for names. Use ? for characters and # for numbers.",
+                    "description": "Pattern to use for names. Use ? for characters and # for numbers. Wilcards (*) permitted.",
                     "displayName": "Tag Value Pattern"
                 }
             }
@@ -25,8 +25,8 @@
         "policyRule": {
             "if": {
                 "not": {
-                    "field": "[concat('tags', parameters('tagName'))]",
-                    "match": "[parameters('tagValuePattern')]"
+                    "field": "[concat('tags.', parameters('tagName'))]",
+                    "like": "[parameters('tagValuePattern')]"
                 }
             },
             "then": {
