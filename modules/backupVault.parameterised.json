@@ -1,0 +1,368 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vaultName": {
+            "type": "string",
+            "defaultValue": "backupVault",
+            "metadata": {
+                "description": "Name for the backup vault. Remove the default to force it to be specified."
+            }
+        },
+        "scheduleRunTimes": {
+            "type": "array",
+            "defaultValue": [
+                "2018-01-01T21:00:00Z"
+            ],
+            "metadata": {
+                "description": "Time of day to run backup(s)"
+            }
+        },
+        "days": {
+            "type": "int",
+            "defaultValue": 30,
+            "metadata": {
+                "description": "Number of days to retain daily backups"
+            }
+        },
+        "weeks": {
+            "type": "int",
+            "defaultValue": 5,
+            "metadata": {
+                "description": "Number of weeks to retain weekly backups"
+            }
+        },
+        "months": {
+            "type": "int",
+            "defaultValue": 12,
+            "metadata": {
+                "description": "Number of months to retain monthly backups"
+            }
+        },
+        "years": {
+            "type": "int",
+            "defaultValue": 7,
+            "metadata": {
+                "description": "Number of years to retain yearly backup"
+            }
+        },
+        "logFrequency": {
+            "type": "int",
+            "defaultValue": 120,
+            "metadata": {
+                "description": "Frequency (in minutes) for SQL log protection"
+            }
+        },
+        "logRetention": {
+            "type": "int",
+            "defaultValue": 7,
+            "metadata": {
+                "description": "Number of days to retain SQL logs backups"
+            }
+        }
+    },
+    "variables": {
+        "tags": "[if(contains(resourceGroup(), 'tags'), resourceGroup().tags, json('{}'))]",
+        "d": "[concat('-Daily', parameters('days'))]",
+        "dw": "[concat(variables('d'), '-Weekly', parameters('weeks'))]",
+        "dwm": "[concat(variables('dw'), '-Monthly', parameters('months'))]",
+        "dwmy": "[concat(variables('dwm'), '-Yearly', parameters('years'))]",
+        "schedulePolicy": {
+            "schedulePolicyType": "SimpleSchedulePolicy",
+            "scheduleRunDays": null,
+            "scheduleRunFrequency": "Daily",
+            "scheduleRunTimes": "[parameters('scheduleRunTimes')]"
+        },
+        "dailySchedule": {
+            "retentionDuration": {
+                "count": "[parameters('days')]",
+                "durationType": "Days"
+            },
+            "retentionTimes": "[parameters('scheduleRunTimes')]"
+        },
+        "weeklySchedule": {
+            "daysOfTheWeek": [
+                "Sunday"
+            ],
+            "retentionDuration": {
+                "count": "[parameters('weeks')]",
+                "durationType": "Weeks"
+            },
+            "retentionTimes": "[parameters('scheduleRunTimes')]"
+        },
+        "monthlySchedule": {
+            "retentionDuration": {
+                "count": "[parameters('months')]",
+                "durationType": "Months"
+            },
+            "retentionScheduleDaily": {
+                "daysOfTheMonth": [
+                    {
+                        "date": 1,
+                        "isLast": false
+                    }
+                ]
+            },
+            "retentionScheduleFormatType": "Daily",
+            "retentionScheduleWeekly": null,
+            "retentionTimes": "[parameters('scheduleRunTimes')]"
+        },
+        "yearlySchedule": {
+            "retentionDuration": {
+                "count": "[parameters('years')]",
+                "durationType": "Years"
+            },
+            "retentionScheduleFormatType": "Weekly",
+            "retentionScheduleWeekly": {
+                "weeksOfTheMonth": [
+                    "First"
+                ],
+                "daysOfTheWeek": [
+                    "Sunday"
+                ]
+            },
+            "monthsOfYear": [
+                "January"
+            ],
+            "retentionTimes": "[parameters('scheduleRunTimes')]"
+        },
+        "sqlSettings": {
+            "timeZone": "UTC",
+            "issqlcompression": false,
+            "isCompression": false
+        },
+        "logSchedulePolicy": {
+            "schedulePolicyType": "LogSchedulePolicy",
+            "scheduleFrequencyInMins": "[parameters('logFrequency')]"
+        },
+        "logRetentionPolicy": {
+            "retentionPolicyType": "SimpleRetentionPolicy",
+            "retentionDuration": {
+                "count": "[parameters('logRetention')]",
+                "durationType": "Days"
+            }
+        }
+    },
+    "resources": [
+        {
+            "name": "[parameters('vaultName')]",
+            "type": "Microsoft.RecoveryServices/vaults",
+            "apiVersion": "2016-06-01",
+            "location": "[resourceGroup().location]",
+            "tags": "[variables('tags')]",
+            "properties": {},
+            "sku": {
+                "name": "RS0",
+                "tier": "Standard"
+            }
+        },
+        {
+            "name": "[concat(parameters('vaultName'), '/VM', variables('d'))]",
+            "comments": "VM, daily backups only",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
+            "properties": {
+                "backupManagementType": "AzureIaasVM",
+                "timeZone": "UTC",
+                "schedulePolicy": "[variables('schedulePolicy')]",
+                "retentionPolicy": {
+                    "retentionPolicyType": "LongTermRetentionPolicy",
+                    "dailySchedule": "[variables('dailySchedule')]"
+                }
+            }
+        },
+        {
+            "name": "[concat(parameters('vaultName'), '/VM', variables('dw'))]",
+            "comments": "VM, daily and weekly backups",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
+            "properties": {
+                "backupManagementType": "AzureIaasVM",
+                "timeZone": "UTC",
+                "schedulePolicy": "[variables('schedulePolicy')]",
+                "retentionPolicy": {
+                    "retentionPolicyType": "LongTermRetentionPolicy",
+                    "dailySchedule": "[variables('dailySchedule')]",
+                    "weeklySchedule": "[variables('weeklySchedule')]"
+                }
+            }
+        },
+        {
+            "name": "[concat(parameters('vaultName'), '/VM', variables('dwm'))]",
+            "comments": "VM, daily, weekly and monthly backups",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
+            "properties": {
+                "backupManagementType": "AzureIaasVM",
+                "timeZone": "UTC",
+                "schedulePolicy": "[variables('schedulePolicy')]",
+                "retentionPolicy": {
+                    "retentionPolicyType": "LongTermRetentionPolicy",
+                    "dailySchedule": "[variables('dailySchedule')]",
+                    "weeklySchedule": "[variables('weeklySchedule')]",
+                    "monthlySchedule": "[variables('monthlySchedule')]"
+                }
+            }
+        },
+        {
+            "name": "[concat(parameters('vaultName'), '/VM', variables('dwmy'))]",
+            "comments": "VM, daily, weekly, monthly and yearly backups",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
+            "properties": {
+                "backupManagementType": "AzureIaasVM",
+                "timeZone": "UTC",
+                "schedulePolicy": "[variables('schedulePolicy')]",
+                "retentionPolicy": {
+                    "retentionPolicyType": "LongTermRetentionPolicy",
+                    "dailySchedule": "[variables('dailySchedule')]",
+                    "weeklySchedule": "[variables('weeklySchedule')]",
+                    "monthlySchedule": "[variables('monthlySchedule')]",
+                    "yearlySchedule": "[variables('yearlySchedule')]"
+                }
+            }
+        },
+        {
+            "name": "[concat(parameters('vaultName'), '/SQL', variables('d'))]",
+            "comments": "SQL, daily only",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
+            "properties": {
+                "backupManagementType": "AzureWorkload",
+                "workLoadType": "SQLDataBase",
+                "settings": "[variables('sqlSettings')]",
+                "subProtectionPolicy": [
+                    {
+                        "policyType": "Full",
+                        "schedulePolicy": "[variables('schedulePolicy')]",
+                        "retentionPolicy": {
+                            "retentionPolicyType": "LongTermRetentionPolicy",
+                            "dailySchedule": "[variables('dailySchedule')]"
+                        }
+                    },
+                    {
+                        "policyType": "Log",
+                        "schedulePolicy": "[variables('logSchedulePolicy')]",
+                        "retentionPolicy": "[variables('logRetentionPolicy')]"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat(parameters('vaultName'), '/SQL', variables('dw'))]",
+            "comments": "SQL, with daily and weekly",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
+            "properties": {
+                "backupManagementType": "AzureWorkload",
+                "workLoadType": "SQLDataBase",
+                "settings": "[variables('sqlSettings')]",
+                "subProtectionPolicy": [
+                    {
+                        "policyType": "Full",
+                        "schedulePolicy": "[variables('schedulePolicy')]",
+                        "retentionPolicy": {
+                            "retentionPolicyType": "LongTermRetentionPolicy",
+                            "dailySchedule": "[variables('dailySchedule')]",
+                            "weeklySchedule": "[variables('weeklySchedule')]"
+                        }
+                    },
+                    {
+                        "policyType": "Log",
+                        "schedulePolicy": "[variables('logSchedulePolicy')]",
+                        "retentionPolicy": "[variables('logRetentionPolicy')]"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat(parameters('vaultName'), '/SQL', variables('dwm'))]",
+            "comments": "SQL, with daily, weekly and monthly backups",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
+            "properties": {
+                "backupManagementType": "AzureWorkload",
+                "workLoadType": "SQLDataBase",
+                "settings": "[variables('sqlSettings')]",
+                "subProtectionPolicy": [
+                    {
+                        "policyType": "Full",
+                        "schedulePolicy": "[variables('schedulePolicy')]",
+                        "retentionPolicy": {
+                            "retentionPolicyType": "LongTermRetentionPolicy",
+                            "dailySchedule": "[variables('dailySchedule')]",
+                            "weeklySchedule": "[variables('weeklySchedule')]",
+                            "monthlySchedule": "[variables('monthlySchedule')]"
+                        }
+                    },
+                    {
+                        "policyType": "Log",
+                        "schedulePolicy": "[variables('logSchedulePolicy')]",
+                        "retentionPolicy": "[variables('logRetentionPolicy')]"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat(parameters('vaultName'), '/SQL', variables('dwmy'))]",
+            "comments": "SQL, with daily, weekly, monthly and yearly backups",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
+            "properties": {
+                "backupManagementType": "AzureWorkload",
+                "workLoadType": "SQLDataBase",
+                "settings": "[variables('sqlSettings')]",
+                "subProtectionPolicy": [
+                    {
+                        "policyType": "Full",
+                        "schedulePolicy": "[variables('schedulePolicy')]",
+                        "retentionPolicy": {
+                            "retentionPolicyType": "LongTermRetentionPolicy",
+                            "dailySchedule": "[variables('dailySchedule')]",
+                            "weeklySchedule": "[variables('weeklySchedule')]",
+                            "monthlySchedule": "[variables('monthlySchedule')]",
+                            "yearlySchedule": "[variables('yearlySchedule')]"
+                        }
+                    },
+                    {
+                        "policyType": "Log",
+                        "schedulePolicy": "[variables('logSchedulePolicy')]",
+                        "retentionPolicy": "[variables('logRetentionPolicy')]"
+                    }
+                ]
+            }
+        }
+    ]
+}
