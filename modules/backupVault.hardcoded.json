@@ -1,0 +1,529 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vaultName": {
+            "type": "string",
+            "defaultValue": "backupVault",
+            "metadata": {
+                "description": "Name for the backup vault. Remove the default to force it to be specified."
+            }
+        },
+        "scheduleRunTimes": {
+            "type": "array",
+            "defaultValue": [
+                "2018-01-01T21:00:00Z"
+            ],
+            "metadata": {
+                "description": "Time of day to run backup(s)"
+            }
+        }
+    },
+    "variables": {
+        "tags": "[if(contains(resourceGroup(), 'tags'), resourceGroup().tags, json('{}'))]"
+    },
+    "resources": [
+        {
+            "name": "[parameters('vaultName')]",
+            "type": "Microsoft.RecoveryServices/vaults",
+            "apiVersion": "2016-06-01",
+            "location": "[resourceGroup().location]",
+            "tags": "[variables('tags')]",
+            "properties": {},
+            "sku": {
+                "name": "RS0",
+                "tier": "Standard"
+            }
+        },
+        {
+            "name": "[concat(parameters('vaultName'), '/VM-Daily30')]",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
+            "properties": {
+                "backupManagementType": "AzureIaasVM",
+                "timeZone": "UTC",
+                "schedulePolicy": {
+                    "schedulePolicyType": "SimpleSchedulePolicy",
+                    "scheduleRunDays": null,
+                    "scheduleRunFrequency": "Daily",
+                    "scheduleRunTimes": "[parameters('scheduleRunTimes')]"
+                },
+                "retentionPolicy": {
+                    "retentionPolicyType": "LongTermRetentionPolicy",
+                    "dailySchedule": {
+                        "retentionDuration": {
+                            "count": 30,
+                            "durationType": "Days"
+                        },
+                        "retentionTimes": "[parameters('scheduleRunTimes')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "[concat(parameters('vaultName'), '/VM-Daily30-Weekly5')]",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
+            "properties": {
+                "backupManagementType": "AzureIaasVM",
+                "timeZone": "UTC",
+                "schedulePolicy": {
+                    "schedulePolicyType": "SimpleSchedulePolicy",
+                    "scheduleRunDays": null,
+                    "scheduleRunFrequency": "Daily",
+                    "scheduleRunTimes": "[parameters('scheduleRunTimes')]"
+                },
+                "retentionPolicy": {
+                    "retentionPolicyType": "LongTermRetentionPolicy",
+                    "dailySchedule": {
+                        "retentionDuration": {
+                            "count": 30,
+                            "durationType": "Days"
+                        },
+                        "retentionTimes": "[parameters('scheduleRunTimes')]"
+                    },
+                    "weeklySchedule": {
+                        "daysOfTheWeek": [
+                            "Sunday"
+                        ],
+                        "retentionDuration": {
+                            "count": 5,
+                            "durationType": "Weeks"
+                        },
+                        "retentionTimes": "[parameters('scheduleRunTimes')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "[concat(parameters('vaultName'), '/VM-Daily30-Weekly5-Monthly12')]",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
+            "properties": {
+                "backupManagementType": "AzureIaasVM",
+                "timeZone": "UTC",
+                "schedulePolicy": {
+                    "schedulePolicyType": "SimpleSchedulePolicy",
+                    "scheduleRunDays": null,
+                    "scheduleRunFrequency": "Daily",
+                    "scheduleRunTimes": "[parameters('scheduleRunTimes')]"
+                },
+                "retentionPolicy": {
+                    "retentionPolicyType": "LongTermRetentionPolicy",
+                    "dailySchedule": {
+                        "retentionDuration": {
+                            "count": 30,
+                            "durationType": "Days"
+                        },
+                        "retentionTimes": "[parameters('scheduleRunTimes')]"
+                    },
+                    "weeklySchedule": {
+                        "daysOfTheWeek": [
+                            "Sunday"
+                        ],
+                        "retentionDuration": {
+                            "count": 5,
+                            "durationType": "Weeks"
+                        },
+                        "retentionTimes": "[parameters('scheduleRunTimes')]"
+                    },
+                    "monthlySchedule": {
+                        "retentionDuration": {
+                            "count": 12,
+                            "durationType": "Months"
+                        },
+                        "retentionScheduleDaily": {
+                            "daysOfTheMonth": [
+                                {
+                                    "date": 1,
+                                    "isLast": false
+                                }
+                            ]
+                        },
+                        "retentionScheduleFormatType": "Daily",
+                        "retentionScheduleWeekly": null,
+                        "retentionTimes": "[parameters('scheduleRunTimes')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "[concat(parameters('vaultName'), '/VM-Daily30-Weekly5-Monthly12-Yearly7')]",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
+            "properties": {
+                "backupManagementType": "AzureIaasVM",
+                "timeZone": "UTC",
+                "schedulePolicy": {
+                    "schedulePolicyType": "SimpleSchedulePolicy",
+                    "scheduleRunDays": null,
+                    "scheduleRunFrequency": "Daily",
+                    "scheduleRunTimes": "[parameters('scheduleRunTimes')]"
+                },
+                "retentionPolicy": {
+                    "retentionPolicyType": "LongTermRetentionPolicy",
+                    "dailySchedule": {
+                        "retentionDuration": {
+                            "count": 30,
+                            "durationType": "Days"
+                        },
+                        "retentionTimes": "[parameters('scheduleRunTimes')]"
+                    },
+                    "weeklySchedule": {
+                        "daysOfTheWeek": [
+                            "Sunday"
+                        ],
+                        "retentionDuration": {
+                            "count": 5,
+                            "durationType": "Weeks"
+                        },
+                        "retentionTimes": "[parameters('scheduleRunTimes')]"
+                    },
+                    "monthlySchedule": {
+                        "retentionDuration": {
+                            "count": 12,
+                            "durationType": "Months"
+                        },
+                        "retentionScheduleDaily": {
+                            "daysOfTheMonth": [
+                                {
+                                    "date": 1,
+                                    "isLast": false
+                                }
+                            ]
+                        },
+                        "retentionScheduleFormatType": "Daily",
+                        "retentionScheduleWeekly": null,
+                        "retentionTimes": "[parameters('scheduleRunTimes')]"
+                    },
+                    "yearlySchedule": {
+                        "retentionDuration": {
+                            "count": 7,
+                            "durationType": "Years"
+                        },
+                        "retentionScheduleFormatType": "Weekly",
+                        "retentionScheduleWeekly": {
+                            "weeksOfTheMonth": [
+                                "First"
+                            ],
+                            "daysOfTheWeek": [
+                                "Sunday"
+                            ]
+                        },
+                        "monthsOfYear": [
+                            "January"
+                        ],
+                        "retentionTimes": "[parameters('scheduleRunTimes')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "[concat(parameters('vaultName'), '/SQL-Daily30')]",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
+            "properties": {
+                "backupManagementType": "AzureWorkload",
+                "workLoadType": "SQLDataBase",
+                "settings": {
+                    "timeZone": "UTC",
+                    "issqlcompression": false,
+                    "isCompression": false
+                },
+                "subProtectionPolicy": [
+                    {
+                        "policyType": "Full",
+                        "schedulePolicy": {
+                            "schedulePolicyType": "SimpleSchedulePolicy",
+                            "scheduleRunFrequency": "Daily",
+                            "scheduleRunTimes": "[parameters('scheduleRunTimes')]"
+                        },
+                        "retentionPolicy": {
+                            "retentionPolicyType": "LongTermRetentionPolicy",
+                            "dailySchedule": {
+                                "retentionDuration": {
+                                    "count": 30,
+                                    "durationType": "Days"
+                                },
+                                "retentionTimes": "[parameters('scheduleRunTimes')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyType": "Log",
+                        "schedulePolicy": {
+                            "schedulePolicyType": "LogSchedulePolicy",
+                            "scheduleFrequencyInMins": 120
+                        },
+                        "retentionPolicy": {
+                            "retentionPolicyType": "SimpleRetentionPolicy",
+                            "retentionDuration": {
+                                "count": 7,
+                                "durationType": "Days"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat(parameters('vaultName'), '/SQL-Daily30-Weekly5')]",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
+            "properties": {
+                "backupManagementType": "AzureWorkload",
+                "workLoadType": "SQLDataBase",
+                "settings": {
+                    "timeZone": "UTC",
+                    "issqlcompression": false,
+                    "isCompression": false
+                },
+                "subProtectionPolicy": [
+                    {
+                        "policyType": "Full",
+                        "schedulePolicy": {
+                            "schedulePolicyType": "SimpleSchedulePolicy",
+                            "scheduleRunFrequency": "Daily",
+                            "scheduleRunTimes": "[parameters('scheduleRunTimes')]"
+                        },
+                        "retentionPolicy": {
+                            "retentionPolicyType": "LongTermRetentionPolicy",
+                            "dailySchedule": {
+                                "retentionDuration": {
+                                    "count": 30,
+                                    "durationType": "Days"
+                                },
+                                "retentionTimes": "[parameters('scheduleRunTimes')]"
+                            },
+                            "weeklySchedule": {
+                                "daysOfTheWeek": [
+                                    "Sunday"
+                                ],
+                                "retentionDuration": {
+                                    "count": 5,
+                                    "durationType": "Weeks"
+                                },
+                                "retentionTimes": "[parameters('scheduleRunTimes')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyType": "Log",
+                        "schedulePolicy": {
+                            "schedulePolicyType": "LogSchedulePolicy",
+                            "scheduleFrequencyInMins": 120
+                        },
+                        "retentionPolicy": {
+                            "retentionPolicyType": "SimpleRetentionPolicy",
+                            "retentionDuration": {
+                                "count": 7,
+                                "durationType": "Days"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat(parameters('vaultName'), '/SQL-Daily30-Weekly5-Monthly12')]",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
+            "properties": {
+                "backupManagementType": "AzureWorkload",
+                "workLoadType": "SQLDataBase",
+                "settings": {
+                    "timeZone": "UTC",
+                    "issqlcompression": false,
+                    "isCompression": false
+                },
+                "subProtectionPolicy": [
+                    {
+                        "policyType": "Full",
+                        "schedulePolicy": {
+                            "schedulePolicyType": "SimpleSchedulePolicy",
+                            "scheduleRunFrequency": "Daily",
+                            "scheduleRunTimes": "[parameters('scheduleRunTimes')]"
+                        },
+                        "retentionPolicy": {
+                            "retentionPolicyType": "LongTermRetentionPolicy",
+                            "dailySchedule": {
+                                "retentionDuration": {
+                                    "count": 30,
+                                    "durationType": "Days"
+                                },
+                                "retentionTimes": "[parameters('scheduleRunTimes')]"
+                            },
+                            "weeklySchedule": {
+                                "daysOfTheWeek": [
+                                    "Sunday"
+                                ],
+                                "retentionDuration": {
+                                    "count": 5,
+                                    "durationType": "Weeks"
+                                },
+                                "retentionTimes": "[parameters('scheduleRunTimes')]"
+                            },
+                            "monthlySchedule": {
+                                "retentionDuration": {
+                                    "count": 12,
+                                    "durationType": "Months"
+                                },
+                                "retentionScheduleDaily": {
+                                    "daysOfTheMonth": [
+                                        {
+                                            "date": 1,
+                                            "isLast": false
+                                        }
+                                    ]
+                                },
+                                "retentionScheduleFormatType": "Daily",
+                                "retentionScheduleWeekly": null,
+                                "retentionTimes": "[parameters('scheduleRunTimes')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyType": "Log",
+                        "schedulePolicy": {
+                            "schedulePolicyType": "LogSchedulePolicy",
+                            "scheduleFrequencyInMins": 120
+                        },
+                        "retentionPolicy": {
+                            "retentionPolicyType": "SimpleRetentionPolicy",
+                            "retentionDuration": {
+                                "count": 7,
+                                "durationType": "Days"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat(parameters('vaultName'), '/SQL-Daily30-Weekly5-Monthly12-Yearly7')]",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
+            "properties": {
+                "backupManagementType": "AzureWorkload",
+                "workLoadType": "SQLDataBase",
+                "settings": {
+                    "timeZone": "UTC",
+                    "issqlcompression": false,
+                    "isCompression": false
+                },
+                "subProtectionPolicy": [
+                    {
+                        "policyType": "Full",
+                        "schedulePolicy": {
+                            "schedulePolicyType": "SimpleSchedulePolicy",
+                            "scheduleRunFrequency": "Daily",
+                            "scheduleRunTimes": "[parameters('scheduleRunTimes')]"
+                        },
+                        "retentionPolicy": {
+                            "retentionPolicyType": "LongTermRetentionPolicy",
+                            "dailySchedule": {
+                                "retentionDuration": {
+                                    "count": 30,
+                                    "durationType": "Days"
+                                },
+                                "retentionTimes": "[parameters('scheduleRunTimes')]"
+                            },
+                            "weeklySchedule": {
+                                "daysOfTheWeek": [
+                                    "Sunday"
+                                ],
+                                "retentionDuration": {
+                                    "count": 5,
+                                    "durationType": "Weeks"
+                                },
+                                "retentionTimes": "[parameters('scheduleRunTimes')]"
+                            },
+                            "monthlySchedule": {
+                                "retentionDuration": {
+                                    "count": 12,
+                                    "durationType": "Months"
+                                },
+                                "retentionScheduleDaily": {
+                                    "daysOfTheMonth": [
+                                        {
+                                            "date": 1,
+                                            "isLast": false
+                                        }
+                                    ]
+                                },
+                                "retentionScheduleFormatType": "Daily",
+                                "retentionScheduleWeekly": null,
+                                "retentionTimes": "[parameters('scheduleRunTimes')]"
+                            },
+                            "yearlySchedule": {
+                                "retentionDuration": {
+                                    "count": 7,
+                                    "durationType": "Years"
+                                },
+                                "retentionScheduleFormatType": "Weekly",
+                                "retentionScheduleWeekly": {
+                                    "weeksOfTheMonth": [
+                                        "First"
+                                    ],
+                                    "daysOfTheWeek": [
+                                        "Sunday"
+                                    ]
+                                },
+                                "monthsOfYear": [
+                                    "January"
+                                ],
+                                "retentionTimes": "[parameters('scheduleRunTimes')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyType": "Log",
+                        "schedulePolicy": {
+                            "schedulePolicyType": "LogSchedulePolicy",
+                            "scheduleFrequencyInMins": 120
+                        },
+                        "retentionPolicy": {
+                            "retentionPolicyType": "SimpleRetentionPolicy",
+                            "retentionDuration": {
+                                "count": 7,
+                                "durationType": "Days"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
