@@ -1,0 +1,7 @@
+{
+    "properties": {
+        "templateLink": "https://raw.githubusercontent.com/richeney/azure-blueprints/master/modules/zero.json",
+        "parameters": {},
+        "mode": "Incremental"
+    }
+}
