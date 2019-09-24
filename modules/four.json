@@ -1,0 +1,91 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vnet": {
+            "type": "object",
+            "defaultValue": {
+                "name": "four",
+                "addressSpace": [
+                    "10.0.0.0/16"
+                ]
+            },
+            "metadata": {
+                "description": "Object containing vnet name and array of addressSpaces",
+                "example": {
+                    "name": "myVnet",
+                    "addressSpace": [
+                        "10.0.0.0/16"
+                    ]
+                }
+            }
+        },
+        "subnet": {
+            "type": "array",
+            "defaultValue": [
+                {
+                    "name": "subnet1",
+                    "addressPrefix": "10.0.1.0/24"
+                },
+                {
+                    "name": "subnet2",
+                    "addressPrefix": "10.0.2.0/24"
+                },
+                {
+                    "name": "subnet3",
+                    "addressPrefix": "10.0.3.0/24"
+                },
+                {
+                    "name": "subnet4",
+                    "addressPrefix": "10.0.4.0/24"
+                }
+            ],
+            "metadata": {
+                "description": "Array of subnet objects, each containing a subnet name and addressPrefix",
+                "example": [
+                    {
+                        "name": "subnet1",
+                        "addressPrefix": "10.0.1.0/24"
+                    },
+                    {
+                        "name": "subnet2",
+                        "addressPrefix": "10.0.2.0/24"
+                    }
+                ]
+            }
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "apiVersion": "2019-04-01",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('vnet').name]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[parameters('vnet').addressSpace]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2019-04-01",
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "copy": {
+                "name": "subnet",
+                "count": "[length(parameters('subnet'))]",
+                "mode": "Serial",
+                "batchSize": 1
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnet').name)]"
+            ],
+            "name": "[concat(parameters('vnet').name, '/', parameters('subnet')[copyIndex('subnet')].name)]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressPrefix": "[parameters('subnet')[copyIndex('subnet')].addressPrefix]"
+            }
+        }
+    ],
+    "outputs": {}
+}
