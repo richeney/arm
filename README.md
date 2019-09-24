@@ -1,5 +1,9 @@
 # azure-blueprints
 
+**PREVIOUS ARM REPO**
+
+The previous <https://github.com/richeney/arm> repo has been renamed to <https://github.com/richeney/arm-labs>.
+
 **WORK IN PROGRESS**
 
 Lab for creating Azure Blueprints for enterprise scaffolding of new subscriptions.  The repository contains examples ARM template modules, policies, custom roles and assignments, scripts etc.    
