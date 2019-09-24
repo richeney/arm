@@ -1,4 +1,6 @@
-# azure-blueprints
+# arm
+
+Azure Resource Manager working area.  Covers subscription templates, policies, etc. Policies may move out into a separate repo and directories may be renamed.
 
 **PREVIOUS ARM REPO**
 
