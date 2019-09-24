@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminPassword": {
+            "value": null
+        },
+        "adminUserName": {
+            "value": "richeney"
+        },
+        "authenticationType": {
+            "value": "password"
+        },
+        "publicIPName": {
+            "value": "ansible-pip"
+        },
+        "dnsPrefix": {
+            "value": "deleteme"
+        },
+        "publicIPNewOrExisting": {
+            "value": "new"
+        },
+        "publicIPResourceGroup": {
+            "value": "ansible_marketplace"
+        },
+        "publicIPAllocationMethod": {
+            "value": "Dynamic"
+        },
+        "storageAccountType": {
+            "value": "Premium_LRS"
+        },
+        "vmName": {
+            "value": "ansiblehost"
+        },
+        "vmSize": {
+            "value": "Standard_DS2_v2"
+        },
+        "location": {
+            "value": "westeurope"
+        },
+        "ansibleVersion": {
+            "value": "latest"
+        },
+        "spType": {
+            "value": "msi"
+        }
+    }
+}
