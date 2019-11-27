@@ -51,7 +51,7 @@
         }
     },
     "variables": {
-        "repoUri": "https://github.com/richeney/azure-blueprints",
+        "repoUri": "https://github.com/richeney/arm",
         "baseUri": "[concat(replace(variables('repoUri'), 'github.com', 'raw.githubusercontent.com'), '/master/')]",
         "uri": {
             "nsgs": "[concat(variables('baseUri'), 'modules/nsgs.json')]",
