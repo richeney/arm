@@ -43,13 +43,10 @@ Usage:
 The uris should be raw JSON files in policy format. If using stdin then it expects a list of uris.
 
 Example file format matching the ARM policy resource type:
-<https://github.com/richeney/azure-blueprints/blob/master/policies/auditemptytag.json>
+<https://github.com/richeney/arm/blob/master/policies/auditemptytag.json>
 
-URIBASE environment variable provides a default URI location, e.g.:
-
-export URIBASE=https://raw.githubusercontent.com/richeney/arm/master/policies
-
-Otherwise use full URIs.
+Either specify fully pathed URIs or the files will be prefixed with URIBASE environment.
+Default URIBASE is <https://raw.githubusercontent.com/richeney/arm/master/policies>.
 EOF
 exit 0
 fi
