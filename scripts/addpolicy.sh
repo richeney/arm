@@ -19,49 +19,75 @@ error()
   exit 1
 }
 
-# Check for zip and jq
-_pkgs=""
-[[ ! -x /usr/bin/zip ]] && _pkgs="$_pkgs zip"
-[[ ! -x /usr/bin/jq ]]  && _pkgs="$_pkgs jq"
+prereqs()
+{
+  # Check for zip and jq
+  _pkgs=""
+  [[ ! -x /usr/bin/zip ]] && _pkgs="$_pkgs zip"
+  [[ ! -x /usr/bin/jq ]]  && _pkgs="$_pkgs jq"
 
-if [[ -n "$_pkgs"  ]]
-then sudo apt-get update && sudo apt-get install --assume-yes -qq $_pkgs
-fi
+  if [[ -n "$_pkgs"  ]]
+  then sudo apt-get update && sudo apt-get install --assume-yes -qq $_pkgs
+  fi
 
-[[ ! -x /usr/bin/zip ]] && error "Install package \"zip\" and rerun"
-[[ ! -x /usr/bin/jq ]] && error "Install package \"jq\" and rerun"
+  [[ ! -x /usr/bin/zip ]] && error "Install package \"zip\" and rerun"
+  [[ ! -x /usr/bin/jq ]] && error "Install package \"jq\" and rerun"
+}
 
-# Read in files from stdin
-
-if [[ -z "$@" ]]
-then
-cat <<EOF
+usage()
+{
+  script=$(basename $0)
+  cat <<EOF
 Usage:
-	$0 uri [uri uri]
-	$0 -
 
-The uris should be raw JSON files in policy format. If using stdin then it expects a list of uris.
+  Create custom policy at subscription scope for current context:
+  $script uri
 
-Example file format matching the ARM policy resource type:
-<https://github.com/richeney/arm/blob/master/policies/auditemptytag.json>
+  Create custom policies at specified management scope:
+  $script -m <management group> uri1 uri2 uri3
 
-Either specify fully pathed URIs or the files will be prefixed with URIBASE environment.
-Default URIBASE is <https://raw.githubusercontent.com/richeney/arm/master/policies>.
+  Display help:
+  $script -h
+
+Management scope can be either the name or full ID. Display name will not be accepted.
+
+The uris should be raw JSON files. Format is the full ARM Azure Policy resource format. Example file:
+https://github.com/richeney/arm/blob/master/policies/auditemptytag.json
+
+Either specify fully pathed URIs or the files will be prefixed with \$URIBASE variable.
+Default \$URIBASE is https://raw.githubusercontent.com/richeney/arm/master/policies.
 EOF
-exit 0
-fi
+
+  [[ -n "$@" ]] && error "$@"
+  exit 0
+}
+# Read in the switches
+
+while getopts ":m:h" opt; do
+  case ${opt} in
+    m ) mg=$OPTARG
+        [[ "$(basename $mg)" != "$mg" && "$(dirname $mg)" != "/providers/Microsoft.Management/managementGroups" ]] && usage "Unexpected value for -m switch"
+        mg=$(basename $mg)
+        ;;
+    h ) usage ;;
+    * ) usage ;;
+  esac
+done
+
+shift $((OPTIND -1))
 
 ## Get list of uris
 uris=$@
-if [ $1 == '-' ]
-then
-  uris=$(cat -)
-fi
+[[ -z "$uris" ]] && usage "uri(s) not specified"
 
-## Find the tenantId GUID - this is the name for the Tenant Root Group management group
+## Check prereqs
+prereqs
 
-tenantId=$(az account show --output tsv --query tenantId)
-[ $(echo "$tenantId" | wc -c) -ne 37 ] && error "Could not determine the GUID for the AAD tenant."
+## Find the subscription GUID - this will also test we are logged in
+
+subId=$(az account show --output tsv --query id)
+[ $(echo "$subId" | wc -c) -ne 37 ] && error "Could not determine the subscription GUID. Are you logged into Azure?"
+
 
 ## Loop through the URIs and create the policy definition at the Tenant Root Group
 
@@ -80,15 +106,28 @@ do
   params=$(jq -r .properties.parameters <<<$json)
   rule=$(jq -r .properties.policyRule <<<$json)
 
-  az policy definition create \
-	--name "$name" \
-	--display-name "$displayName" \
-	--description "$description" \
-	--mode $mode \
-        --management-group $tenantId \
-	--params "$params" \
-	--rules "$rule" \
-	--output tsv --query id
+  if [[ -n "$mg" ]]
+  then
+    az policy definition create \
+  	--name "$name" \
+  	--display-name "$displayName" \
+  	--description "$description" \
+  	--mode $mode \
+    --management-group $mg \
+  	--params "$params" \
+  	--rules "$rule" \
+  	--output tsv --query id
+  else
+    az policy definition create \
+  	--name "$name" \
+  	--display-name "$displayName" \
+  	--description "$description" \
+  	--mode $mode \
+    --subscription $subId \
+  	--params "$params" \
+  	--rules "$rule" \
+  	--output tsv --query id
+  fi
 
   [ $? -ne 0 ] && error "Failed to run az policy definition create successfully"
 done
