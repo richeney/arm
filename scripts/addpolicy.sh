@@ -37,16 +37,19 @@ if [[ -z "$@" ]]
 then
 cat <<EOF
 Usage:
-	$0 uri [uri uri] 
+	$0 uri [uri uri]
 	$0 -
 
-Where the uri format should be a raw JSON file matching the ARM policy resource type.
+The uris should be raw JSON files in policy format. If using stdin then it expects a list of uris.
 
-Example file:
-  https://github.com/richeney/azure-blueprints/blob/master/policies/auditemptytag.json
+Example file format matching the ARM policy resource type:
+<https://github.com/richeney/azure-blueprints/blob/master/policies/auditemptytag.json>
 
-Export URIBASE environment variable to provide default URI location. E.g.:
-  export URIBASE=https://raw.githubusercontent.com/richeney/azure-blueprints/master/policies
+URIBASE environment variable provides a default URI location, e.g.:
+
+export URIBASE=https://raw.githubusercontent.com/richeney/arm/master/policies
+
+Otherwise use full URIs.
 EOF
 exit 0
 fi
@@ -65,13 +68,14 @@ tenantId=$(az account show --output tsv --query tenantId)
 
 ## Loop through the URIs and create the policy definition at the Tenant Root Group
 
-uribase=${URIBASE:-https://raw.githubusercontent.com/richeney/azure-blueprints/master/policies}
+uribase=${URIBASE:-https://raw.githubusercontent.com/richeney/arm/master/policies}
 
 for uri in $uris
 do
-  [ "$(basename $uri)" == "$uri" ] && uri=$uribase/$uri
- 
+  [ "$(basename $uri)" == "$uri" ] && uri=$uribase/$(basename --suffix .json $uri).json
   json=$(curl -sSL $uri) || error "Failed to curl $uri"
+  [[ "$json" == '404: Not Found' ]] && error "Could not find $uri"
+
   name=$(jq -r .name <<<$json)
   displayName=$(jq -r .properties.displayName <<<$json)
   description=$(jq -r .properties.description <<<$json)
